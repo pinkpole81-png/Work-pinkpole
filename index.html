@@ -123,6 +123,8 @@ tr.clickable:hover{background:var(--hw-l)}
   display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .emptybox{padding:40px 20px;text-align:center;color:var(--gray-l);font-size:13px}
 svg{display:block;max-width:100%}
+svg .hit{fill:transparent;cursor:pointer}
+svg .hit:hover{fill:rgba(243,115,33,.07)}
 .card-hd{padding:14px 18px 0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .card-hd h3{margin:0;font-size:13.5px;font-weight:700}
 .card-hd .sub{font-size:11.5px;color:var(--gray)}
@@ -789,6 +791,13 @@ function barChart(items, opt={}){
     });
     s+=`<text x="${W-PR+8}" y="${bBot+4}" font-size="10" fill="#4A6076">동의율</text>`;
   }
+  if(opt.click){                                   /* 막대 영역 클릭 → 해당 월 상세 */
+    const cw = iw/items.length;
+    items.forEach((d,i)=>{
+      s+=`<rect class="hit" x="${PL+cw*i}" y="${PT-10}" width="${cw}" height="${ih+34}" rx="4"
+           onclick="${opt.click}(${d.k})"><title>${esc(d.l)} 엑셀 상세 보기</title></rect>`;
+    });
+  }
   return s+'</svg>';
 }
 function hBars(items){
@@ -843,28 +852,19 @@ function viewMain(){
     </div>
   </div>
 
-  <!-- ② 월별 시도건수 · 동의건수 · 동의율 -->
+  <!-- ② 월별 시도건수 · 동의건수 · 동의율 (차트) -->
   <div class="sec">
-    <div class="sec-hd"><h2>월별 실적</h2><span class="desc">시도건수 · 동의건수 · 동의율</span>
-      <span class="right">월을 누르면 해당 월 엑셀 상세가 열립니다</span></div>
-    <div class="grid g-32">
-      <div class="card card-pad">
-        ${barChart(M.map(m=>({l:m.m+'월', v:m.agr, r:m.att?m.agr/m.att:0, hi:m.m===best.m})), {line:true,h:250,aria:'월별 동의건수'})}
-        <div class="legend" style="margin-top:10px;padding-top:11px;border-top:1px solid #EFF2F5">
-          <span><i style="background:#F0A05A"></i>월 동의건수</span>
-          <span><i style="background:#F37321"></i>최고 실적월</span>
-          <span><i style="background:#4A6076"></i>동의율</span>
-        </div>
+    <div class="sec-hd"><h2>월별 실적</h2><span class="desc">막대 = 동의건수 · 점선 = 동의율 · 하단 = 시도건수</span>
+      <span class="right">그래프의 월을 클릭하면 해당 월 엑셀 상세가 열립니다</span></div>
+    <div class="card card-pad">
+      ${barChart(M.map(m=>({k:m.m, l:m.m+'월', l2:'시도 '+nf(m.att), v:m.agr,
+        r:m.att?m.agr/m.att:0, hi:m.m===best.m})), {line:true, h:300, click:'go', aria:'월별 동의건수 및 동의율'})}
+      <div class="legend" style="margin-top:10px;padding-top:11px;border-top:1px solid #EFF2F5">
+        <span><i style="background:#F0A05A"></i>월 동의건수</span>
+        <span><i style="background:#F37321"></i>최고 실적월 (${best.m}월 ${nf(best.agr)}건)</span>
+        <span><i style="background:#4A6076"></i>동의율</span>
+        <span style="margin-left:auto">1~8월 합계 · 시도 ${nf(tot.att)}건 / 동의 ${nf(tot.agr)}건 / 동의율 ${pct(tot.agr,tot.att)}</span>
       </div>
-      <div class="card"><div class="tbl-scroll">
-        <table><thead><tr><th class="l">월</th><th>시도건수</th><th>동의건수</th><th>동의율</th><th style="width:80px">비중</th></tr></thead><tbody>
-        ${M.map(m=>`<tr class="clickable" onclick="go(${m.m})" title="${m.m}월 엑셀 상세 보기">
-          <td class="l"><b>${m.m}월</b></td><td>${nf(m.att)}</td><td class="agr">${nf(m.agr)}</td>
-          <td class="mute">${pct(m.agr,m.att)}</td>
-          <td><div class="bar-cell"><i style="width:${(m.agr/best.agr*100).toFixed(1)}%"></i></div></td></tr>`).join('')}
-        </tbody><tfoot><tr><td class="l">합계</td><td>${nf(tot.att)}</td><td class="agr">${nf(tot.agr)}</td>
-          <td>${pct(tot.agr,tot.att)}</td><td></td></tr></tfoot></table>
-      </div></div>
     </div>
   </div>
 
