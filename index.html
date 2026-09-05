@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마케팅 활용동의 획득 실적 대시보드 | 한화손해보험</title>
+<style>
+/* ============================================================
+   한화손해보험 · 마케팅 활용동의 획득 실적 대시보드
+   Design tokens
+   ============================================================ */
+:root{
+  --hw-orange:#F37321;      /* 한화 시그니처 오렌지 */
+  --hw-orange-d:#D95E12;
+  --hw-orange-l:#FFF2E9;
+  --ink:#16202B;
+  --ink-2:#33414F;
+  --gray:#6B7887;
+  --gray-l:#98A4B0;
+  --line:#E3E8ED;
+  --line-2:#EFF2F5;
+  --bg:#F4F6F8;
+  --card:#FFFFFF;
+  --slate:#4A6076;
+  --slate-l:#8FA3B5;
+  --good:#1F9D63;
+  --warn:#C9932A;
+  --bad:#D3453B;
+  --r:10px;
+  --shadow:0 1px 2px rgba(22,32,43,.05), 0 4px 14px rgba(22,32,43,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Pretendard","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",system-ui,-apple-system,sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1440px;margin:0 auto;padding:0 24px 56px}
+
+/* ---------- Header ---------- */
+.topbar{background:var(--ink);color:#fff;border-bottom:3px solid var(--hw-orange)}
+.topbar-in{max-width:1440px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px}
+.brand-mark{width:30px;height:30px;border-radius:7px;background:var(--hw-orange);display:grid;place-items:center;
+  font-weight:800;font-size:15px;color:#fff;letter-spacing:-.5px;flex:none}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.brand-sub{font-size:11px;color:#9DAAB6;margin-top:1px;letter-spacing:.2px}
+.topbar h1{font-size:16px;font-weight:600;margin:0;padding-left:16px;border-left:1px solid #3A4756;color:#E6EAEE;letter-spacing:-.3px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.basis{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:7px;
+  padding:6px 12px;font-size:12px;color:#DCE3E9;white-space:nowrap}
+.basis b{color:#fff;font-weight:600}
+.btn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);color:#E6EAEE;
+  border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.16)}
+.btn.primary{background:var(--hw-orange);border-color:var(--hw-orange);color:#fff;font-weight:600}
+.btn.primary:hover{background:var(--hw-orange-d)}
+
+/* ---------- Month tabs ---------- */
+.tabbar{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
+  box-shadow:0 1px 3px rgba(22,32,43,.04)}
+.tabbar-in{max-width:1440px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+.tab{appearance:none;background:none;border:0;border-bottom:3px solid transparent;padding:13px 16px;
+  font:inherit;font-size:13.5px;font-weight:600;color:var(--gray);cursor:pointer;white-space:nowrap;letter-spacing:-.2px}
+.tab:hover{color:var(--ink-2);background:#FAFBFC}
+.tab.on{color:var(--hw-orange-d);border-bottom-color:var(--hw-orange)}
+.tab .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--hw-orange);
+  vertical-align:2px;margin-left:5px}
+.tab.sep{margin-left:8px;padding-left:20px;border-left:1px solid var(--line)}
+
+/* ---------- Section ---------- */
+.sec{margin-top:24px}
+.sec-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:11px;flex-wrap:wrap}
+.sec-hd h2{font-size:15px;font-weight:700;margin:0;letter-spacing:-.3px;position:relative;padding-left:11px}
+.sec-hd h2::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:3px;border-radius:2px;background:var(--hw-orange)}
+.sec-hd .desc{font-size:12px;color:var(--gray)}
+.sec-hd .right{margin-left:auto;font-size:12px;color:var(--gray)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-pad{padding:18px 20px}
+.grid{display:grid;gap:14px}
+.g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.g-32{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+.g-21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+
+/* ---------- KPI ---------- */
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line)}
+.kpi.acc::after{background:var(--hw-orange)}
+.kpi.acc2::after{background:var(--slate)}
+.kpi-l{font-size:12px;color:var(--gray);font-weight:500;letter-spacing:-.2px}
+.kpi-v{font-size:27px;font-weight:700;letter-spacing:-1px;margin-top:5px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi-v .u{font-size:14px;font-weight:600;color:var(--gray);margin-left:2px;letter-spacing:0}
+.kpi-s{font-size:11.5px;color:var(--gray-l);margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.chip{display:inline-block;padding:1px 7px;border-radius:20px;font-size:11px;font-weight:600;background:var(--line-2);color:var(--ink-2)}
+.chip.up{background:#E8F6EF;color:var(--good)}
+.chip.dn{background:#FCEBEA;color:var(--bad)}
+.chip.or{background:var(--hw-orange-l);color:var(--hw-orange-d)}
+
+/* ---------- Table ---------- */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line-2);white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+th{font-size:11.5px;color:var(--gray);font-weight:600;background:#FAFBFC;border-bottom:1px solid var(--line);
+  position:sticky;top:0;letter-spacing:-.1px}
+th:first-child,td:first-child{text-align:left}
+th.l,td.l{text-align:left}
+th.c,td.c{text-align:center}
+tbody tr:hover{background:#FBFCFD}
+tfoot td{font-weight:700;background:#FAFBFC;border-top:1px solid var(--line);border-bottom:0}
+.tbl-scroll{max-height:460px;overflow:auto;border-radius:0 0 var(--r) var(--r)}
+.num{font-weight:600}
+.mute{color:var(--gray-l);font-weight:400}
+.rk{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:6px;background:var(--line-2);
+  font-size:11px;font-weight:700;color:var(--ink-2)}
+.rk.r1{background:var(--hw-orange);color:#fff}
+.rk.r2{background:#FBB584;color:#7A3A0E}
+.rk.r3{background:var(--hw-orange-l);color:var(--hw-orange-d)}
+.pill{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11.5px;font-weight:600;
+  background:var(--line-2);color:var(--ink-2)}
+.pill.c1{background:#EAF1F7;color:#2C5578}
+.pill.c2{background:#F2EDF7;color:#5A3E7A}
+.pill.c3{background:#EDF5EE;color:#2C6B41}
+
+/* ---------- Bars in table ---------- */
+.bar-cell{width:100%;min-width:80px;height:6px;background:var(--line-2);border-radius:4px;overflow:hidden}
+.bar-cell > i{display:block;height:100%;background:var(--hw-orange);border-radius:4px}
+.bar-cell.s > i{background:var(--slate-l)}
+
+/* ---------- misc ---------- */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.inp{border:1px solid var(--line);border-radius:7px;padding:7px 11px;font:inherit;font-size:13px;
+  background:#fff;color:var(--ink);min-width:260px}
+.inp:focus{outline:2px solid var(--hw-orange-l);border-color:var(--hw-orange)}
+.notice{background:var(--hw-orange-l);border:1px solid #F8D6BC;border-radius:var(--r);padding:12px 16px;
+  font-size:12.5px;color:#8A4211;display:flex;gap:9px;align-items:flex-start}
+.notice b{color:#6E340C}
+.notice.gray{background:#F7F9FA;border-color:var(--line);color:var(--ink-2)}
+.notice.gray b{color:var(--ink)}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--gray);flex-wrap:wrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:0}
+.foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--gray-l);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.emptybox{padding:38px 20px;text-align:center;color:var(--gray-l);font-size:13px}
+svg{display:block;max-width:100%}
+.card-hd{padding:14px 18px 0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.card-hd h3{margin:0;font-size:13.5px;font-weight:700;letter-spacing:-.2px}
+.card-hd .sub{font-size:11.5px;color:var(--gray)}
+.card-hd .right{margin-left:auto}
+.stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:13px}
+.stat-row:last-child{border-bottom:0}
+.stat-row .k{color:var(--gray)}
+.stat-row .v{font-weight:700;font-variant-numeric:tabular-nums}
+.tierbox{display:flex;flex-direction:column;gap:8px}
+.tier{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.tier .tn{font-size:11.5px;font-weight:700;color:#fff;background:var(--slate);border-radius:5px;padding:2px 7px;flex:none}
+.tier.t1 .tn{background:#7A93A8}.tier.t2 .tn{background:#F0A05A}.tier.t3 .tn{background:var(--hw-orange)}
+.tier .tl{font-size:12.5px;color:var(--ink-2)}
+.tier .tv{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;font-size:14px}
+.tier .tv small{font-size:11px;color:var(--gray);font-weight:500;margin-left:3px}
+
+@media (max-width:1180px){ .g-5{grid-template-columns:repeat(3,1fr)} .g-4{grid-template-columns:repeat(2,1fr)}
+  .g-32,.g-21{grid-template-columns:1fr} }
+@media (max-width:760px){ .g-5,.g-4,.g-3,.g-2{grid-template-columns:1fr} .wrap{padding:0 14px 40px}
+  .topbar-in,.tabbar-in{padding-left:14px;padding-right:14px} }
+@media print{
+  body{background:#fff} .tabbar,.btn,.toolbar{display:none!important}
+  .card,.kpi{box-shadow:none;break-inside:avoid} .tbl-scroll{max-height:none;overflow:visible}
+  .sec{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <div class="brand-mark">H</div>
+      <div>
+        <div class="brand-name">한화손해보험</div>
+        <div class="brand-sub">고객센터 운영팀</div>
+      </div>
+    </div>
+    <h1>마케팅 활용동의 획득 실적 대시보드</h1>
+    <div class="topbar-right">
+      <div class="basis">데이터 기준일 <b id="basisDate">-</b></div>
+      <button class="btn" id="btnCopy">메일 요약 복사</button>
+      <button class="btn primary" onclick="window.print()">인쇄 / PDF</button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabbar"><div class="tabbar-in" id="tabs"></div></nav>
+
+<div class="wrap"><main id="view"></main>
+  <div class="foot">
+    <div id="footL"></div>
+    <div>한화손해보험 고객센터 · 내부 보고용</div>
+  </div>
+</div>
+
+<script>
+/* ================================================================================
+   ★★★ 데이터 입력 영역 — 매주 이 부분만 수정하시면 모든 숫자·그래프가 자동 반영됩니다 ★★★
+   --------------------------------------------------------------------------------
+   1) meta.baseDate : 데이터 기준일 (화면 우상단 및 하단에 표시)
+   2) months[]      : 1~8월 실적 (시도/동의). 인센티브 없음
+   3) sep           : 9월 이후 자율참여 실적 + 인센티브 (주간 실적 / 참여자별 동의건수)
+   4) 상담사 배열 형식 : ["센터","팀","사번","상담사명", 시도건수, 동의건수]
+   ================================================================================ */
+const DATA = {
+
+  meta: {
+    baseDate: "2026-09-05",        // ← 데이터 기준일 (매주 수정)
+    updatedAt: "2026-09-05",       // ← 대시보드 최종 갱신일
+    owner: "고객센터 운영팀"
+  },
+
+  /* 인센티브 기준 (9월 자율참여부터 적용) — 전건 인센티브, 1인 월 상한 15만원 */
+  incentive: {
+    cap: 150000,
+    hpoint: 1000,
+    tiers: [
+      { name:"1구간", min:20,  rate:500  },   // 20건 이상  : 전건 500원
+      { name:"2구간", min:50,  rate:700  },   // 50건 이상  : 전건 700원
+      { name:"3구간", min:100, rate:1000 }    // 100건 이상 : 전건 1,000원
+    ]
+  },
+
+  months: [
+    {
+      m: 1, group: "시범 운영", note: "상담사별 상세 미집계 (전체 집계만 보유)",
+      calls: 8829, noncall: 4362, att: 976, agr: 231, hc: 13,
+      ch: { own: 75, ga: 152, stg: 4 },
+      agents: []
+    },
+    {
+      m: 2, group: "시범 운영", note: "상담사별 상세 미집계 (전체 집계만 보유)",
+      calls: 23376, noncall: 11234, att: 4268, agr: 900, hc: 13,
+      ch: { own: 280, ga: 599, stg: 21 },
+      agents: []
+    },
+    {
+      m: 3, group: "1차 장기단일그룹", note: "3/11~3/31 운영 · 청주 특화상담팀 3/11 1일 참여 포함",
+      calls: 82958, noncall: 43422, att: 5212, agr: 1250, hc: 46,
+      ch: { own: 438, ga: 785, stg: 27 },
+      agents: [
+        ["청주","청주3팀","8094751","노영아",91,20],
+        ["청주","청주3팀","8094753","양윤경",88,10],
+        ["청주","청주3팀","8094989","김정은",108,61],
+        ["청주","청주4팀","8095000","허경란",93,14],
+        ["청주","청주4팀","8094750","김은정",100,8],
+        ["청주","청주4팀","8094993","엄지선",98,23],
+        ["청주","청주4팀","8095565","노주영",97,25],
+        ["청주","청주5팀","8094755","이혜원",97,39],
+        ["청주","청주5팀","8094990","박유미",95,26],
+        ["청주","청주5팀","8095561","김세진",99,40],
+        ["청주","청주5팀","8095579","정효순",99,30],
+        ["청주","청주6팀","8094994","유지민",95,34],
+        ["청주","청주6팀","8094747","김도이",96,29],
+        ["청주","청주6팀","8094752","박은선",93,26],
+        ["청주","청주6팀","8095571","우병옥",94,28],
+        ["청주","청주7팀","8094754","양은아",49,17],
+        ["청주","청주7팀","8094999","정민경",104,25],
+        ["청주","청주7팀","8095567","민하니",117,53],
+        ["청주","청주7팀","8095578","정영",93,29],
+        ["서울","서울2팀","8094463","장미향",91,22],
+        ["서울","서울2팀","8095709","최종현",105,27],
+        ["서울","서울2팀","8095715","김나연",70,1],
+        ["서울","서울2팀","8095716","이승은",98,8],
+        ["서울","서울3팀","8095559","고지영",91,24],
+        ["서울","서울3팀","8095707","강영미",209,80],
+        ["서울","서울4팀","8094727","김윤미",156,56],
+        ["서울","서울5팀","8094731","이진숙",90,16],
+        ["대구","대구1팀","8094456","김나경",140,24],
+        ["대구","대구1팀","8094546","장지연",140,18],
+        ["대구","대구1팀","8094547","전인숙",109,33],
+        ["대구","대구1팀","8095711","유미숙",90,38],
+        ["대구","대구1팀","8095712","권유진",92,4],
+        ["대구","대구1팀","8095714","이지헌",153,39],
+        ["대구","대구2팀","8094542","김강민",152,27],
+        ["대구","대구2팀","8094981","권미",146,17],
+        ["대구","대구2팀","8094987","조미경",150,11],
+        ["대구","대구2팀","8095703","정한영",141,15],
+        ["대구","대구2팀","8095706","신미라",150,26],
+        ["대구","대구2팀","8095710","김효정",140,20],
+        ["대구","대구3팀","8094544","이정이",131,18],
+        ["대구","대구3팀","8094982","김유정",92,16],
+        ["대구","대구3팀","8094983","김현정",100,21],
+        ["대구","대구3팀","8094985","이지영",150,28],
+        ["대구","대구3팀","8095576","이현주",145,46],
+        ["대구","대구3팀","8095581","최미경",74,19],
+        ["대구","대구3팀","8095582","한영민",92,38],
+        ["청주","특화상담팀","8061853","강유진",6,0],
+        ["청주","특화상담팀","8062026","이수진",6,1],
+        ["청주","특화상담팀","8087860","김은영",0,0],
+        ["청주","특화상담팀","8088210","정나리",7,1],
+        ["청주","특화상담팀","8088428","조영미",29,5],
+        ["청주","특화상담팀","8092823","김선아",6,0],
+        ["청주","특화상담팀","8092830","원은경",8,2],
+        ["청주","특화상담팀","8093277","연다희",6,0],
+        ["청주","특화상담팀","8093407","이상순",6,4],
+        ["청주","특화상담팀","8061833","오윤정",9,2],
+        ["청주","특화상담팀","8061981","윤수정",6,2],
+        ["청주","특화상담팀","8090018","박세아",14,3],
+        ["청주","특화상담팀","8090949","권효순",6,1]
+      ]
+    },
+    {
+      m: 4, group: "2차 장기단일그룹", note: "",
+      calls: 102528, noncall: 54117, att: 7541, agr: 1516, hc: 44,
+      ch: { own: 496, ga: 984, stg: 36 },
+      agents: [
+        ["청주","청주3팀","8094751","노영아",157,31],
+        ["청주","청주3팀","8094753","양윤경",165,15],
+        ["청주","청주3팀","8094989","김정은",175,88],
+        ["청주","청주4팀","8095000","허경란",154,7],
+        ["청주","청주4팀","8094750","김은정",155,21],
+        ["청주","청주4팀","8094993","엄지선",172,48],
+        ["청주","청주4팀","8095565","노주영",176,24],
+        ["청주","청주5팀","8094755","이혜원",155,48],
+        ["청주","청주5팀","8094990","박유미",154,35],
+        ["청주","청주5팀","8095561","김세진",141,51],
+        ["청주","청주5팀","8095579","정효순",152,58],
+        ["청주","청주6팀","8094994","유지민",159,56],
+        ["청주","청주6팀","8094747","김도이",189,37],
+        ["청주","청주6팀","8094752","박은선",179,50],
+        ["청주","청주6팀","8095571","우병옥",159,56],
+        ["청주","청주7팀","8094754","양은아",306,100],
+        ["청주","청주7팀","8094999","정민경",158,32],
+        ["청주","청주7팀","8095567","민하니",303,94],
+        ["청주","청주7팀","8095578","정영",168,56],
+        ["서울","서울2팀","8094463","장미향",40,5],
+        ["서울","서울2팀","8095709","최종현",157,35],
+        ["서울","서울2팀","8095715","김나연",154,10],
+        ["서울","서울2팀","8095716","이승은",216,10],
+        ["서울","서울3팀","8095559","고지영",155,46],
+        ["서울","서울3팀","8095707","강영미",320,92],
+        ["서울","서울3팀","8095568","백선숙",185,34],
+        ["서울","서울4팀","8094727","김윤미",229,59],
+        ["서울","서울5팀","8094731","이진숙",155,32],
+        ["대구","대구1팀","8094456","김나경",154,16],
+        ["대구","대구1팀","8094546","장지연",155,16],
+        ["대구","대구1팀","8094547","전인숙",154,31],
+        ["대구","대구1팀","8095711","유미숙",131,26],
+        ["대구","대구1팀","8095712","권유진",157,1],
+        ["대구","대구1팀","8095714","이지헌",161,18],
+        ["대구","대구2팀","8094542","김강민",175,23],
+        ["대구","대구2팀","8094981","권미",156,11],
+        ["대구","대구2팀","8094987","조미경",155,1],
+        ["대구","대구2팀","8095703","정한영",160,8],
+        ["대구","대구2팀","8095706","신미라",154,21],
+        ["대구","대구2팀","8095710","김효정",155,12],
+        ["대구","대구3팀","8094544","이정이",131,17],
+        ["대구","대구3팀","8094982","김유정",131,5],
+        ["대구","대구3팀","8094985","이지영",131,7],
+        ["대구","대구3팀","8095576","이현주",161,51],
+        ["대구","대구3팀","8095582","한영민",132,22]
+      ]
+    },
+    {
+      m: 5, group: "1차 멀티+업무그룹", note: "",
+      calls: 96638, noncall: 48417, att: 8474, agr: 2154, hc: 52,
+      ch: { own: 695, ga: 1375, stg: 84 },
+      agents: [
+        ["청주","청주3팀","8093725","함선미",187,51],
+        ["청주","청주3팀","8094332","김미순",109,19],
+        ["청주","청주3팀","8094336","안수연",115,23],
+        ["청주","청주3팀","8093403","강은미",129,51],
+        ["청주","청주3팀","8094604","김지혜",128,24],
+        ["청주","청주4팀","8093409","추국화",108,16],
+        ["청주","청주4팀","8094335","박진경",109,25],
+        ["청주","청주5팀","8094337","정진경",113,26],
+        ["청주","청주5팀","8094458","김미정",146,46],
+        ["청주","청주6팀","8094333","김윤희",111,32],
+        ["청주","청주6팀","8094605","박현아",114,40],
+        ["청주","청주6팀","8094607","유지연",109,13],
+        ["청주","청주7팀","8093908","김도연",111,30],
+        ["청주","청주7팀","8094470","허정미",110,32],
+        ["서울","서울2팀","8094577","유신애",142,15],
+        ["서울","서울3팀","8094538","서정자",338,114],
+        ["서울","서울2팀","8092928","김미진",200,7],
+        ["서울","서울2팀","8092931","김주희",130,17],
+        ["서울","서울3팀","8092929","김성신",257,30],
+        ["서울","서울3팀","8092935","우인명",145,44],
+        ["서울","서울3팀","8091302","최윤정",168,54],
+        ["서울","서울3팀","8091308","백소영",403,77],
+        ["서울","서울3팀","8091993","김혜숙",132,49],
+        ["서울","서울3팀","8094728","김화진",134,45],
+        ["서울","서울4팀","8086510","정영임",141,43],
+        ["서울","서울4팀","8087870","조인화",527,304],
+        ["서울","서울4팀","8088984","정경심",284,87],
+        ["서울","서울4팀","8088985","이정화",123,23],
+        ["서울","서울4팀","8090251","위지연",319,76],
+        ["서울","서울4팀","8090255","김민나",246,42],
+        ["서울","서울4팀","8091307","김수진",290,99],
+        ["서울","서울4팀","8091995","홍매화",272,64],
+        ["서울","서울4팀","8092000","정윤정",323,61],
+        ["서울","서울4팀","8092003","박정희",131,21],
+        ["서울","서울4팀","8093853","서경희",222,16],
+        ["서울","서울5팀","8088986","최은미",115,11],
+        ["서울","서울5팀","8090952","조인해",373,109],
+        ["서울","서울5팀","8091306","김수정",137,28],
+        ["서울","서울5팀","8092002","황유경",108,30],
+        ["서울","서울5팀","8092005","박미선",169,50],
+        ["서울","서울5팀","8092008","임성은",132,26],
+        ["서울","서울5팀","8092514","이정민",158,53],
+        ["서울","서울5팀","8093856","차유미",126,24],
+        ["서울","서울5팀","8092934","박소연",131,50],
+        ["서울","서울5팀","8092932","류지혜",116,29],
+        ["대구","대구4팀","8089438","박선영",40,2],
+        ["대구","대구4팀","8093668","김유나",40,7],
+        ["대구","대구4팀","8091792","김연화",40,5],
+        ["대구","대구4팀","8092757","민지현",40,4],
+        ["대구","대구4팀","8092766","최보경",40,0],
+        ["대구","대구4팀","8092953","우지혜",40,2],
+        ["대구","대구4팀","8093666","김귀해",43,8]
+      ]
+    },
+    {
+      m: 6, group: "2차 멀티+업무그룹", note: "대구센터 자체 진행분(시도 551 / 동의 47) 포함",
+      calls: 145810, noncall: 75416, att: 10438, agr: 2160, hc: 52,
+      ch: { own: 658, ga: 1439, stg: 63 },
+      agents: [
+        ["청주","청주3팀","8093725","함선미",150,20],
+        ["청주","청주3팀","8094332","김미순",158,19],
+        ["청주","청주3팀","8094336","안수연",167,8],
+        ["청주","청주3팀","8093403","강은미",152,53],
+        ["청주","청주3팀","8094604","김지혜",201,17],
+        ["청주","청주4팀","8093409","추국화",147,23],
+        ["청주","청주4팀","8094335","박진경",150,23],
+        ["청주","청주5팀","8094337","정진경",87,17],
+        ["청주","청주5팀","8094458","김미정",151,36],
+        ["청주","청주6팀","8094333","김윤희",160,43],
+        ["청주","청주6팀","8094605","박현아",147,48],
+        ["청주","청주6팀","8094607","유지연",147,9],
+        ["청주","청주7팀","8093908","김도연",165,46],
+        ["청주","청주7팀","8094470","허정미",137,36],
+        ["서울","서울2팀","8094577","유신애",155,8],
+        ["서울","서울3팀","8094538","서정자",250,84],
+        ["서울","서울2팀","8092928","김미진",148,4],
+        ["서울","서울2팀","8092931","김주희",150,12],
+        ["서울","서울3팀","8092929","김성신",252,25],
+        ["서울","서울3팀","8092935","우인명",162,35],
+        ["서울","서울3팀","8091302","최윤정",154,51],
+        ["서울","서울3팀","8091308","백소영",300,28],
+        ["서울","서울3팀","8091993","김혜숙",152,46],
+        ["서울","서울3팀","8094728","김화진",161,41],
+        ["서울","서울4팀","8086510","정영임",171,62],
+        ["서울","서울4팀","8087870","조인화",509,286],
+        ["서울","서울4팀","8088984","정경심",284,72],
+        ["서울","서울4팀","8088985","이정화",189,19],
+        ["서울","서울4팀","8090251","위지연",360,103],
+        ["서울","서울4팀","8090255","김민나",231,30],
+        ["서울","서울4팀","8091307","김수진",283,72],
+        ["서울","서울4팀","8091995","홍매화",231,46],
+        ["서울","서울4팀","8092000","정윤정",349,64],
+        ["서울","서울4팀","8092003","박정희",152,16],
+        ["서울","서울4팀","8093853","서경희",288,8],
+        ["서울","서울5팀","8088986","최은미",192,3],
+        ["서울","서울5팀","8090952","조인해",480,105],
+        ["서울","서울5팀","8091306","김수정",154,12],
+        ["서울","서울5팀","8092002","황유경",166,46],
+        ["서울","서울5팀","8092005","박미선",155,26],
+        ["서울","서울5팀","8092008","임성은",155,22],
+        ["서울","서울5팀","8092514","이정민",661,235],
+        ["서울","서울5팀","8093856","차유미",147,20],
+        ["서울","서울5팀","8092934","박소연",150,57],
+        ["서울","서울5팀","8092932","류지혜",157,48],
+        ["대구","대구3팀","8090583","석다영",147,23],
+        ["대구","대구4팀","8091793","박민정",40,2],
+        ["대구","대구4팀","8091357","조진희",42,0],
+        ["대구","대구4팀","8089436","박주영",49,0],
+        ["대구","대구4팀","8090867","박분순",61,0],
+        ["대구","대구4팀","8091783","이영미",41,0],
+        ["대구","대구4팀","8092754","김하나",40,3],
+        ["대구","대구 자체진행","8095576","이현주",27,1],
+        ["대구","대구 자체진행","8090775","신선화",1,1],
+        ["대구","대구 자체진행","8091350","엄미경",5,1],
+        ["대구","대구 자체진행","8092765","전지영",19,5],
+        ["대구","대구 자체진행","8093261","김민지",20,3],
+        ["대구","대구 자체진행","8093675","신수영",22,1],
+        ["대구","대구 자체진행","8093919","김영선",39,3],
+        ["대구","대구 자체진행","8094456","김나경",21,2],
+        ["대구","대구 자체진행","8094542","김강민",31,3],
+        ["대구","대구 자체진행","8094544","이정이",29,0],
+        ["대구","대구 자체진행","8094546","장지연",72,8],
+        ["대구","대구 자체진행","8094547","전인숙",41,7],
+        ["대구","대구 자체진행","8094981","권미",20,2],
+        ["대구","대구 자체진행","8094982","김유정",23,0],
+        ["대구","대구 자체진행","8094985","이지영",39,3],
+        ["대구","대구 자체진행","8094987","조미경",42,2],
+        ["대구","대구 자체진행","8095582","한영민",14,0],
+        ["대구","대구 자체진행","8095703","정한영",26,0],
+        ["대구","대구 자체진행","8095706","신미라",35,2],
+        ["대구","대구 자체진행","8095710","김효정",25,3]
+      ]
+    },
+    {
+      m: 7, group: "1차 특화+멀티그룹", note: "",
+      calls: 132595, noncall: 68542, att: 11517, agr: 1592, hc: 55,
+      ch: { own: 500, ga: 1033, stg: 59 },
+      agents: [
+        ["청주","특화팀","8061853","강유진",264,23],
+        ["청주","특화팀","8090949","권효순",293,29],
+        ["청주","특화팀","8092823","김선아",268,7],
+        ["청주","특화팀","8087860","김은영",272,38],
+        ["청주","특화팀","8093277","연다희",265,33],
+        ["청주","특화팀","8061833","오윤정",300,15],
+        ["청주","특화팀","8092830","원은경",292,39],
+        ["청주","특화팀","8061981","윤수정",286,39],
+        ["청주","특화팀","8093407","이상순",279,20],
+        ["청주","특화팀","8062026","이수진",271,40],
+        ["청주","특화팀","8088210","정나리",673,96],
+        ["청주","특화팀","8088428","조영미",588,190],
+        ["청주","청주3팀","8061893","권영희",266,21],
+        ["청주","청주3팀","8061952","김수지",138,25],
+        ["청주","청주3팀","8093272","김정은",133,16],
+        ["청주","청주3팀","8088437","김지안",134,16],
+        ["청주","청주3팀","8088413","이미영",250,13],
+        ["청주","청주3팀","8090121","이옥순",229,29],
+        ["청주","청주4팀","8061750","남궁정혜",132,16],
+        ["청주","청주4팀","8090132","조민정",142,12],
+        ["청주","청주4팀","8091106","박지영",133,24],
+        ["청주","청주4팀","8092147","강유정",147,60],
+        ["청주","청주4팀","8092839","조명옥",132,38],
+        ["청주","청주4팀","8093281","전연화",132,14],
+        ["청주","청주4팀","8093539","정선희",132,1],
+        ["청주","청주5팀","8092154","이종미",216,18],
+        ["청주","청주5팀","8092831","유나형",317,70],
+        ["청주","청주5팀","8093804","정진숙",249,45],
+        ["청주","청주6팀","8093406","원혜경",133,14],
+        ["청주","청주6팀","8061944","정희진",134,22],
+        ["청주","청주6팀","8062019","노현",164,48],
+        ["청주","청주6팀","8062020","김소희",132,12],
+        ["청주","청주6팀","8090017","배민자",135,27],
+        ["청주","청주6팀","8091788","김지연",134,30],
+        ["청주","청주7팀","8092149","이선희",421,84],
+        ["청주","청주7팀","8088202","임영미",196,2],
+        ["청주","청주7팀","8090122","장미화",156,26],
+        ["청주","청주7팀","8090125","지민경",190,30],
+        ["청주","청주7팀","8091037","이화영",132,1],
+        ["청주","청주7팀","8091108","안혜은",132,6],
+        ["청주","청주7팀","8093405","박영아",590,86],
+        ["서울","서울3팀","8086714","주정미",141,24],
+        ["서울","서울2팀","8093432","김지혜",134,10],
+        ["대구","대구1팀","8091070","임지유",132,5],
+        ["대구","대구1팀","8089299","우혜진",132,6],
+        ["대구","대구1팀","8093675","신수영",132,4],
+        ["대구","대구2팀","8091350","엄미경",133,9],
+        ["대구","대구2팀","8088457","장은영",133,3],
+        ["대구","대구2팀","8090200","이한결",164,17],
+        ["대구","대구2팀","8090775","신선화",133,42],
+        ["대구","대구2팀","8092765","전지영",160,48],
+        ["대구","대구2팀","8093261","김민지",133,17],
+        ["대구","대구3팀","8093919","김영선",144,7],
+        ["대구","대구3팀","8088473","오경혜",132,14],
+        ["대구","대구3팀","8093395","김민정1",132,11]
+      ]
+    },
+    {
+      m: 8, group: "2차 특화+멀티그룹", note: "",
+      calls: 122395, noncall: 62402, att: 13045, agr: 1632, hc: 55,
+      ch: { own: 567, ga: 1028, stg: 37 },
+      agents: [
+        ["청주","특화팀","8061853","강유진",264,22],
+        ["청주","특화팀","8090949","권효순",397,40],
+        ["청주","특화팀","8092823","김선아",271,8],
+        ["청주","특화팀","8087860","김은영",268,18],
+        ["청주","특화팀","8093277","연다희",279,21],
+        ["청주","특화팀","8061833","오윤정",268,15],
+        ["청주","특화팀","8092830","원은경",303,28],
+        ["청주","특화팀","8061981","윤수정",406,52],
+        ["청주","특화팀","8093407","이상순",309,14],
+        ["청주","특화팀","8062026","이수진",317,35],
+        ["청주","특화팀","8088210","정나리",799,100],
+        ["청주","특화팀","8088428","조영미",692,221],
+        ["청주","청주3팀","8061893","권영희",146,7],
+        ["청주","청주3팀","8061952","김수지",148,12],
+        ["청주","청주3팀","8093272","김정은",140,19],
+        ["청주","청주3팀","8088437","김지안",142,15],
+        ["청주","청주3팀","8088413","이미영",145,5],
+        ["청주","청주3팀","8090121","이옥순",201,9],
+        ["청주","청주4팀","8061750","남궁정혜",144,9],
+        ["청주","청주4팀","8090132","조민정",310,18],
+        ["청주","청주4팀","8091106","박지영",140,29],
+        ["청주","청주4팀","8092147","강유정",147,15],
+        ["청주","청주4팀","8092839","조명옥",143,34],
+        ["청주","청주4팀","8093281","전연화",142,5],
+        ["청주","청주4팀","8093539","정선희",132,2],
+        ["청주","청주5팀","8092154","이종미",165,20],
+        ["청주","청주5팀","8092831","유나형",220,41],
+        ["청주","청주5팀","8093533","김미연",143,18],
+        ["청주","청주6팀","8093406","원혜경",205,22],
+        ["청주","청주6팀","8061944","정희진",145,30],
+        ["청주","청주6팀","8062019","노현",182,55],
+        ["청주","청주6팀","8062020","김소희",594,82],
+        ["청주","청주6팀","8090017","배민자",601,120],
+        ["청주","청주6팀","8091788","김지연",141,21],
+        ["청주","청주7팀","8092149","이선희",499,96],
+        ["청주","청주7팀","8088202","임영미",186,0],
+        ["청주","청주7팀","8090122","장미화",206,11],
+        ["청주","청주7팀","8090125","지민경",203,9],
+        ["청주","청주7팀","8091037","이화영",140,1],
+        ["청주","청주7팀","8091108","안혜은",142,8],
+        ["청주","청주7팀","8093405","박영아",641,106],
+        ["서울","서울3팀","8086714","주정미",140,36],
+        ["서울","서울2팀","8093432","김지혜",141,6],
+        ["대구","대구1팀","8091070","임지유",140,3],
+        ["대구","대구1팀","8089299","우혜진",140,11],
+        ["대구","대구1팀","8093675","신수영",140,3],
+        ["대구","대구2팀","8091350","엄미경",143,16],
+        ["대구","대구2팀","8088457","장은영",141,10],
+        ["대구","대구2팀","8090200","이한결",140,11],
+        ["대구","대구2팀","8090775","신선화",141,43],
+        ["대구","대구2팀","8092765","전지영",150,29],
+        ["대구","대구2팀","8093261","김민지",140,36],
+        ["대구","대구3팀","8093919","김영선",142,9],
+        ["대구","대구3팀","8088473","오경혜",140,12],
+        ["대구","대구3팀","8093395","김민정1",141,14]
+      ]
+    }
+  ],
+  /* ================= 9월 이후 : 자율참여 + 인센티브 ================= */
+  sep: {
+    m: 9,
+    label: "9월 자율참여",
+    /* 주간 실적 — 매주 한 줄씩 추가하세요 */
+    weeks: [
+      { label:"1주차", range:"9/01~9/05", att:0, agr:0 }
+    ],
+    /* 참여자별 동의 획득건수
+       형식 : ["센터","팀","사번","상담사명", 참여여부(1=참여/0=미참여), 동의건수] */
+    roster: [
+      ["청주","특화팀","8061853","강유진", 1, 0],
+      ["청주","특화팀","8090949","권효순", 1, 0],
+      ["청주","특화팀","8092823","김선아", 1, 0],
+      ["청주","특화팀","8087860","김은영", 1, 0],
+      ["청주","특화팀","8093277","연다희", 1, 0],
+      ["청주","특화팀","8061833","오윤정", 1, 0],
+      ["청주","특화팀","8092830","원은경", 1, 0],
+      ["청주","특화팀","8061981","윤수정", 1, 0],
+      ["청주","특화팀","8093407","이상순", 1, 0],
+      ["청주","특화팀","8062026","이수진", 1, 0],
+      ["청주","특화팀","8088210","정나리", 1, 0],
+      ["청주","특화팀","8088428","조영미", 1, 0],
+      ["청주","청주3팀","8061893","권영희", 1, 0],
+      ["청주","청주3팀","8061952","김수지", 1, 0],
+      ["청주","청주3팀","8093272","김정은", 1, 0],
+      ["청주","청주3팀","8088437","김지안", 1, 0],
+      ["청주","청주3팀","8088413","이미영", 1, 0],
+      ["청주","청주3팀","8090121","이옥순", 1, 0],
+      ["청주","청주4팀","8061750","남궁정혜", 1, 0],
+      ["청주","청주4팀","8090132","조민정", 1, 0],
+      ["청주","청주4팀","8091106","박지영", 1, 0],
+      ["청주","청주4팀","8092147","강유정", 1, 0],
+      ["청주","청주4팀","8092839","조명옥", 1, 0],
+      ["청주","청주4팀","8093281","전연화", 1, 0],
+      ["청주","청주4팀","8093539","정선희", 1, 0],
+      ["청주","청주5팀","8092154","이종미", 1, 0],
+      ["청주","청주5팀","8092831","유나형", 1, 0],
+      ["청주","청주5팀","8093533","김미연", 1, 0],
+      ["청주","청주6팀","8093406","원혜경", 1, 0],
+      ["청주","청주6팀","8061944","정희진", 1, 0],
+      ["청주","청주6팀","8062019","노현", 1, 0],
+      ["청주","청주6팀","8062020","김소희", 1, 0],
+      ["청주","청주6팀","8090017","배민자", 1, 0],
+      ["청주","청주6팀","8091788","김지연", 1, 0],
+      ["청주","청주7팀","8092149","이선희", 1, 0],
+      ["청주","청주7팀","8088202","임영미", 1, 0],
+      ["청주","청주7팀","8090122","장미화", 1, 0],
+      ["청주","청주7팀","8090125","지민경", 1, 0],
+      ["청주","청주7팀","8091037","이화영", 1, 0],
+      ["청주","청주7팀","8091108","안혜은", 1, 0],
+      ["청주","청주7팀","8093405","박영아", 1, 0],
+      ["서울","서울3팀","8086714","주정미", 1, 0],
+      ["서울","서울2팀","8093432","김지혜", 1, 0],
+      ["대구","대구1팀","8091070","임지유", 1, 0],
+      ["대구","대구1팀","8089299","우혜진", 1, 0],
+      ["대구","대구1팀","8093675","신수영", 1, 0],
+      ["대구","대구2팀","8091350","엄미경", 1, 0],
+      ["대구","대구2팀","8088457","장은영", 1, 0],
+      ["대구","대구2팀","8090200","이한결", 1, 0],
+      ["대구","대구2팀","8090775","신선화", 1, 0],
+      ["대구","대구2팀","8092765","전지영", 1, 0],
+      ["대구","대구2팀","8093261","김민지", 1, 0],
+      ["대구","대구3팀","8093919","김영선", 1, 0],
+      ["대구","대구3팀","8088473","오경혜", 1, 0],
+      ["대구","대구3팀","8093395","김민정1", 1, 0]
+    ]
+  },
+
+  /* 제도 설계 근거 : 6월 실적 기준 인센티브 시뮬레이션 (참고용, 실지급 아님) */
+  simulation: {
+    label: "6월 실적 기준 시뮬레이션",
+    people: 52, agree: 2112, achievers: 33, total: 1224000,
+    tiers: [
+      { name:"1구간(20건 이상)",  people:21, amount:355500 },
+      { name:"2구간(50건 이상)",  people:8,  amount:360500 },
+      { name:"3구간(100건 이상)", people:4,  amount:508000 }
+    ]
+  }
+};
+/* ============================ 데이터 입력 영역 끝 ============================ */
+
+/* ================================================================================
+   이하 로직 — 수정 불필요
+   ================================================================================ */
+const $ = s => document.querySelector(s);
+const nf = n => (Math.round(n)||0).toLocaleString('ko-KR');
+const won = n => nf(n) + '원';
+const pct = (a,b,d=1) => b ? (a/b*100).toFixed(d) + '%' : '0.0%';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CENTER_ORDER = ['청주','서울','대구'];
+const M = DATA.months, SEP = DATA.sep, INC = DATA.incentive;
+const A = a => ({center:a[0], team:a[1], id:a[2], name:a[3], att:a[4], agr:a[5]});
+
+/* ---- 인센티브 계산 (전건 적용 · 상한 15만원) ---- */
+function tierOf(n){
+  let t = null;
+  for(const x of INC.tiers) if(n >= x.min) t = x;
+  return t;
+}
+function calcInc(n){
+  const t = tierOf(n);
+  return t ? Math.min(n * t.rate, INC.cap) : 0;
+}
+
+/* ---- 집계 유틸 ---- */
+function groupBy(rows, keyFn){
+  const map = new Map();
+  rows.forEach(r => {
+    const k = keyFn(r);
+    if(!map.has(k)) map.set(k, {key:k, att:0, agr:0, n:0, inc:0, rows:[]});
+    const g = map.get(k);
+    g.att += r.att||0; g.agr += r.agr||0; g.inc += r.inc||0; g.n++; g.rows.push(r);
+  });
+  return [...map.values()];
+}
+const sortCenter = arr => arr.sort((a,b)=>{
+  const i = CENTER_ORDER.indexOf(a.key), j = CENTER_ORDER.indexOf(b.key);
+  return (i<0?99:i) - (j<0?99:j);
+});
+
+/* ================================ SVG 차트 ================================ */
+/* 세로 막대 + 보조 꺾은선 */
+function barChart(items, opt={}){
+  const W = opt.w||760, H = opt.h||236, PL=48, PR=opt.line?46:16, PT=18, PB=34;
+  const iw = W-PL-PR, ih = H-PT-PB;
+  const max = Math.max(1, ...items.map(d=>d.v));
+  const nice = Math.ceil(max/ (max>2000?500: max>500?100: max>100?20:5)) * (max>2000?500: max>500?100: max>100?20:5);
+  const bw = Math.min(46, iw/items.length*0.56);
+  const x = i => PL + iw/items.length*(i+0.5);
+  /* 동의율 라인을 겹치지 않게 표시하기 위해, 막대는 플롯 영역의 아래쪽 72%만 사용 */
+  const ihB = opt.line ? ih*0.72 : ih;
+  const y = v => PT + ih - (v/nice)*ihB;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.aria||'차트')}" style="width:100%;height:${H}px">`;
+  for(let g=0; g<=4; g++){
+    const gv = nice/4*g, gy = y(gv);
+    s += `<line x1="${PL}" x2="${W-PR}" y1="${gy}" y2="${gy}" stroke="${g?'#EFF2F5':'#DDE3E8'}" stroke-width="1"/>`;
+    s += `<text x="${PL-8}" y="${gy+4}" text-anchor="end" font-size="10.5" fill="#98A4B0">${nf(gv)}</text>`;
+  }
+  items.forEach((d,i)=>{
+    const bx = x(i)-bw/2, by = y(d.v), bh = Math.max(1, PT+ih-by);
+    const col = d.hi ? '#F37321' : (opt.color||'#F0A05A');
+    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="3" fill="${col}"/>`;
+    if(d.v>0){
+      /* 막대가 충분히 높으면 값을 막대 안쪽에 표기 → 동의율 라인 라벨과 겹치지 않음 */
+      const inside = bh >= 30;
+      s += `<text x="${x(i)}" y="${inside?by+15:by-6}" text-anchor="middle" font-size="11" font-weight="700"
+             fill="${inside?'#FFFFFF':'#33414F'}">${nf(d.v)}</text>`;
+    }
+    s += `<text x="${x(i)}" y="${H-13}" text-anchor="middle" font-size="11.5" fill="${d.hi?'#D95E12':'#6B7887'}" font-weight="${d.hi?700:500}">${esc(d.l)}</text>`;
+    if(d.l2) s += `<text x="${x(i)}" y="${H-2}" text-anchor="middle" font-size="9.5" fill="#B0BAC4">${esc(d.l2)}</text>`;
+  });
+  if(opt.line){
+    /* 동의율은 상단 전용 밴드에 표시 (막대와 분리) */
+    const rs = items.map(d=>d.r||0);
+    const hi = Math.max(...rs), lo = Math.min(...rs);
+    const span = (hi-lo) || Math.max(hi, 0.01);
+    const bTop = PT+18, bBot = PT + ih*0.24;
+    const ly = v => bBot - ((v - (lo - span*0.35)) / (span*1.7 || 1)) * (bBot-bTop);
+    const pts = items.map((d,i)=>`${x(i)},${ly(d.r||0)}`).join(' ');
+    s += `<polyline points="${pts}" fill="none" stroke="#4A6076" stroke-width="1.8" stroke-dasharray="4 3"/>`;
+    items.forEach((d,i)=>{
+      s += `<circle cx="${x(i)}" cy="${ly(d.r||0)}" r="3" fill="#fff" stroke="#4A6076" stroke-width="1.8"/>`;
+      s += `<text x="${x(i)}" y="${ly(d.r||0)-9}" text-anchor="middle" font-size="9.5" fill="#4A6076" font-weight="600"
+             stroke="#fff" stroke-width="2.5" paint-order="stroke">${(d.r*100).toFixed(1)}%</text>`;
+    });
+    s += `<text x="${W-PR+8}" y="${bBot+4}" font-size="10" fill="#4A6076">동의율</text>`;
+  }
+  return s + '</svg>';
+}
+
+/* 가로 막대 (센터/팀별) */
+function hBars(items, opt={}){
+  const max = Math.max(1, ...items.map(d=>d.v));
+  return `<div style="display:flex;flex-direction:column;gap:${opt.gap||11}px">` + items.map(d=>`
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px">
+        <span style="font-weight:600;color:#33414F">${esc(d.l)}${d.sub?` <span class="mute" style="font-weight:400">${esc(d.sub)}</span>`:''}</span>
+        <span style="font-variant-numeric:tabular-nums"><b>${d.fmt?d.fmt:nf(d.v)}</b>${d.r!==undefined?` <span class="mute">· ${d.r}</span>`:''}</span>
+      </div>
+      <div style="height:9px;background:#EFF2F5;border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:${(d.v/max*100).toFixed(1)}%;background:${d.c||'#F37321'};border-radius:5px"></div>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+/* 도넛 (채널 구성) */
+function donut(items, opt={}){
+  const S=150, R=58, r=38, C=S/2;
+  const tot = items.reduce((a,b)=>a+b.v,0) || 1;
+  let ang = -Math.PI/2, s = `<svg viewBox="0 0 ${S} ${S}" style="width:${S}px;height:${S}px;flex:none">`;
+  items.forEach(d=>{
+    const a2 = ang + d.v/tot*Math.PI*2, big = (a2-ang)>Math.PI?1:0;
+    const p = (rad,a)=>[C+rad*Math.cos(a), C+rad*Math.sin(a)];
+    const [x1,y1]=p(R,ang),[x2,y2]=p(R,a2),[x3,y3]=p(r,a2),[x4,y4]=p(r,ang);
+    s += `<path d="M${x1} ${y1} A${R} ${R} 0 ${big} 1 ${x2} ${y2} L${x3} ${y3} A${r} ${r} 0 ${big} 0 ${x4} ${y4} Z" fill="${d.c}"/>`;
+    ang = a2;
+  });
+  s += `<text x="${C}" y="${C-2}" text-anchor="middle" font-size="17" font-weight="700" fill="#16202B">${nf(tot)}</text>`;
+  s += `<text x="${C}" y="${C+13}" text-anchor="middle" font-size="10" fill="#98A4B0">${esc(opt.unit||'건')}</text></svg>`;
+  return `<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">${s}
+    <div style="display:flex;flex-direction:column;gap:9px;font-size:12.5px;min-width:130px">` +
+    items.map(d=>`<div style="display:flex;align-items:center;gap:7px">
+      <i style="width:9px;height:9px;border-radius:2px;background:${d.c};flex:none"></i>
+      <span style="color:#6B7887">${esc(d.l)}</span>
+      <span style="margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums">${nf(d.v)}</span>
+      <span class="mute" style="width:44px;text-align:right">${pct(d.v,tot)}</span>
+    </div>`).join('') + '</div></div>';
+}
+
+/* ================================ 공통 블록 ================================ */
+function kpi(label, value, unit, sub, cls){
+  return `<div class="kpi ${cls||''}"><div class="kpi-l">${label}</div>
+    <div class="kpi-v">${value}${unit?`<span class="u">${unit}</span>`:''}</div>
+    <div class="kpi-s">${sub||''}</div></div>`;
+}
+function cardHd(title, sub, right){
+  return `<div class="card-hd"><h3>${title}</h3>${sub?`<span class="sub">${sub}</span>`:''}${right?`<span class="right sub">${right}</span>`:''}</div>`;
+}
+/* 센터별 / 팀별 표 */
+function orgTable(rows, opt={}){
+  const byC = sortCenter(groupBy(rows, r=>r.center));
+  const tot = rows.reduce((a,r)=>({att:a.att+r.att, agr:a.agr+r.agr}),{att:0,agr:0});
+  let h = `<table><thead><tr><th class="l">센터 / 팀</th><th>인원</th><th>시도</th><th>동의</th><th>동의율</th><th style="width:130px">비중</th></tr></thead><tbody>`;
+  byC.forEach(c=>{
+    h += `<tr style="background:#FAFBFC"><td class="l"><b>${esc(c.key)}센터</b></td><td class="num">${nf(c.n)}</td>
+      <td class="num">${nf(c.att)}</td><td class="num" style="color:#D95E12">${nf(c.agr)}</td>
+      <td class="num">${pct(c.agr,c.att)}</td>
+      <td><div class="bar-cell"><i style="width:${tot.agr?(c.agr/tot.agr*100).toFixed(1):0}%"></i></div></td></tr>`;
+    if(opt.teams!==false){
+      groupBy(c.rows, r=>r.team).sort((a,b)=>b.agr-a.agr).forEach(t=>{
+        h += `<tr><td class="l mute" style="padding-left:22px">${esc(t.key)}</td><td class="num mute">${nf(t.n)}</td>
+          <td class="num mute">${nf(t.att)}</td><td class="num">${nf(t.agr)}</td>
+          <td class="num mute">${pct(t.agr,t.att)}</td>
+          <td><div class="bar-cell s"><i style="width:${tot.agr?(t.agr/tot.agr*100).toFixed(1):0}%"></i></div></td></tr>`;
+      });
+    }
+  });
+  h += `</tbody><tfoot><tr><td class="l">합계</td><td>${nf(rows.length)}</td><td>${nf(tot.att)}</td>
+    <td style="color:#D95E12">${nf(tot.agr)}</td><td>${pct(tot.agr,tot.att)}</td><td></td></tr></tfoot></table>`;
+  return h;
+}
+/* 상담원 랭킹 표 */
+function rankTable(rows, opt={}){
+  const list = rows.slice().sort((a,b)=> b.agr-a.agr || b.att-a.att);
+  const top = opt.limit ? list.slice(0,opt.limit) : list;
+  let h = `<table><thead><tr><th class="c" style="width:44px">순위</th><th class="l">상담사</th><th class="l">센터</th>
+    <th class="l">팀</th>${opt.months?'<th>참여</th>':''}<th>시도</th><th>동의</th><th>동의율</th></tr></thead><tbody>`;
+  top.forEach((r,i)=>{
+    h += `<tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+(r.id||''))}">
+      <td class="c"><span class="rk ${i<3?'r'+(i+1):''}">${i+1}</span></td>
+      <td class="l"><b>${esc(r.name)}</b> <span class="mute" style="font-size:11px">${esc(r.id||'')}</span></td>
+      <td class="l"><span class="pill c${CENTER_ORDER.indexOf(r.center)+1||''}">${esc(r.center)}</span></td>
+      <td class="l mute">${esc(r.team)}</td>
+      ${opt.months?`<td class="num mute">${r.mn}개월</td>`:''}
+      <td class="num mute">${nf(r.att)}</td><td class="num" style="color:#D95E12;font-weight:700">${nf(r.agr)}</td>
+      <td class="num mute">${pct(r.agr,r.att)}</td></tr>`;
+  });
+  return h + '</tbody></table>';
+}
+function searchBox(id, ph){
+  return `<div class="toolbar"><input class="inp" id="${id}" placeholder="${ph}" oninput="filterRows(this)">
+    <span class="sub mute" id="${id}_c"></span></div>`;
+}
+function filterRows(inp){
+  const q = inp.value.trim().toLowerCase();
+  const tb = inp.closest('.card').querySelector('tbody');
+  let n = 0;
+  tb.querySelectorAll('tr').forEach(tr=>{
+    const hit = !q || (tr.dataset.s||'').toLowerCase().includes(q);
+    tr.style.display = hit ? '' : 'none'; if(hit) n++;
+  });
+  const c = document.getElementById(inp.id + '_c');
+  if(c) c.textContent = q ? `${n}명 검색됨` : '';
+}
+
+/* ================================ 전체 누적 뷰 ================================ */
+function viewAll(){
+  const tot = M.reduce((a,m)=>({calls:a.calls+m.calls, att:a.att+m.att, agr:a.agr+m.agr,
+    own:a.own+m.ch.own, ga:a.ga+m.ch.ga, stg:a.stg+m.ch.stg}), {calls:0,att:0,agr:0,own:0,ga:0,stg:0});
+  const withA = M.filter(m=>m.agents.length);
+  const best = M.reduce((a,b)=> b.agr>a.agr?b:a);
+  const hc = M[M.length-1].hc;
+
+  /* 3~8월 상담사별 누적 (사번 기준 합산, 센터/팀은 최근 소속 기준) */
+  const cmap = new Map();
+  withA.forEach(m => m.agents.map(A).forEach(r=>{
+    if(!cmap.has(r.id)) cmap.set(r.id, {id:r.id, name:r.name, center:r.center, team:r.team, att:0, agr:0, mn:0});
+    const g = cmap.get(r.id);
+    g.att += r.att; g.agr += r.agr; g.mn++;
+    g.name = r.name; g.center = r.center; g.team = r.team;
+  }));
+  const cumRows = [...cmap.values()];
+
+  const sepAgr = SEP.roster.reduce((a,r)=>a+(r[5]||0),0);
+  const sepInc = SEP.roster.filter(r=>r[4]).reduce((a,r)=>a+calcInc(r[5]||0),0);
+
+  return `
+  <div class="sec">
+    <div class="sec-hd"><h2>전체 누적 실적</h2>
+      <span class="desc">2026년 1월 ~ 8월 · 마케팅 활용동의</span>
+      <span class="right">단위 : 건</span></div>
+    <div class="grid g-5">
+      ${kpi('누적 동의 획득', nf(tot.agr), '건', `<span class="chip or">최고 ${best.m}월 ${nf(best.agr)}건</span>`, 'acc')}
+      ${kpi('누적 시도', nf(tot.att), '건', `응대호 대비 ${pct(tot.att,tot.calls,2)}`, 'acc2')}
+      ${kpi('평균 동의율', pct(tot.agr,tot.att), '', '동의 ÷ 시도', '')}
+      ${kpi('운영 상담사', nf(hc), '명', `8월 기준 · 3~8월 누적 ${nf(cumRows.length)}명 참여`, '')}
+      ${kpi('9월 인센티브', won(sepInc), '', sepAgr ? `동의 ${nf(sepAgr)}건 기준` : '<span class="chip">9월 데이터 입력 대기</span>', 'acc')}
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>월별 동의 획득 실적</h2><span class="desc">막대 = 동의건수 · 점선 = 동의율</span></div>
+    <div class="card card-pad">
+      ${barChart(M.map(m=>({l:m.m+'월', v:m.agr, r:m.att?m.agr/m.att:0, hi:m.m===best.m, l2:m.hc+'명'})), {line:true, h:250, aria:'월별 동의 건수'})}
+      <div class="legend" style="margin-top:10px;padding-top:11px;border-top:1px solid #EFF2F5">
+        <span><i style="background:#F0A05A"></i>월 동의건수</span>
+        <span><i style="background:#F37321"></i>최고 실적월</span>
+        <span><i style="background:#4A6076"></i>동의율(동의÷시도)</span>
+        <span style="margin-left:auto">※ 하단 숫자는 해당 월 운영 인원</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>월별 상세</h2><span class="desc">월 탭을 누르면 해당 월의 센터·팀·상담원 실적이 표시됩니다</span></div>
+    <div class="grid g-32">
+      <div class="card">${cardHd('월별 실적 요약')}
+        <div class="card-pad" style="padding-top:10px">
+        <table><thead><tr><th class="l">월</th><th class="l">운영 그룹</th><th>인원</th><th>응대호</th>
+          <th>시도</th><th>동의</th><th>동의율</th><th class="c">보기</th></tr></thead><tbody>
+        ${M.map(m=>`<tr><td class="l"><b>${m.m}월</b></td><td class="l mute" style="font-size:12px">${esc(m.group)}</td>
+          <td class="num mute">${nf(m.hc)}</td><td class="num mute">${nf(m.calls)}</td>
+          <td class="num">${nf(m.att)}</td><td class="num" style="color:#D95E12;font-weight:700">${nf(m.agr)}</td>
+          <td class="num mute">${pct(m.agr,m.att)}</td>
+          <td class="c"><button class="tab" style="padding:2px 9px;font-size:11.5px;border:1px solid #E3E8ED;border-radius:6px"
+            onclick="go(${m.m})">상세</button></td></tr>`).join('')}
+        </tbody><tfoot><tr><td class="l">합계</td><td></td><td></td><td>${nf(tot.calls)}</td><td>${nf(tot.att)}</td>
+          <td style="color:#D95E12">${nf(tot.agr)}</td><td>${pct(tot.agr,tot.att)}</td><td></td></tr></tfoot></table>
+        </div>
+      </div>
+      <div class="card">${cardHd('채널별 동의 구성', '1~8월 누적')}
+        <div class="card-pad" style="padding-top:14px">
+          ${donut([{l:'전속',v:tot.own,c:'#F37321'},{l:'GA',v:tot.ga,c:'#4A6076'},{l:'전략',v:tot.stg,c:'#F0C08A'}])}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>센터별 · 팀별 누적 실적</h2><span class="desc">3~8월 상담사별 상세 집계 기준</span></div>
+    <div class="grid g-32">
+      <div class="card"><div class="tbl-scroll">${orgTable(cumRows)}</div></div>
+      <div class="card card-pad">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:14px">센터별 동의 획득</div>
+        ${hBars(sortCenter(groupBy(cumRows, r=>r.center)).map(c=>({
+          l:c.key+'센터', sub:`${c.n}명`, v:c.agr, r:pct(c.agr,c.att)+' 동의율',
+          c: c.key==='청주'?'#F37321': c.key==='서울'?'#4A6076':'#F0A05A'})))}
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid #EFF2F5">
+          <div class="stat-row"><span class="k">상담사 1인 평균 동의</span><span class="v">${(cumRows.reduce((a,r)=>a+r.agr,0)/(cumRows.length||1)).toFixed(1)}건</span></div>
+          <div class="stat-row"><span class="k">상담사 1인 평균 시도</span><span class="v">${(cumRows.reduce((a,r)=>a+r.att,0)/(cumRows.length||1)).toFixed(1)}건</span></div>
+          <div class="stat-row"><span class="k">최다 획득 상담사</span><span class="v">${esc(cumRows.slice().sort((a,b)=>b.agr-a.agr)[0]?.name||'-')} · ${nf(cumRows.slice().sort((a,b)=>b.agr-a.agr)[0]?.agr||0)}건</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>상담원 Ranking</h2><span class="desc">3~8월 누적 동의건수 상위 20명</span>
+      <span class="right">전체 ${nf(cumRows.length)}명</span></div>
+    <div class="card"><div class="tbl-scroll">${rankTable(cumRows, {limit:20, months:true})}</div></div>
+  </div>
+
+  <div class="notice gray" style="margin-top:18px">
+    <span>ℹ</span><div><b>집계 기준</b> · 1~2월은 시범 운영으로 전체 집계만 보유하여 상담사별 랭킹에서 제외됩니다.
+    6월 실적에는 대구센터 자체 진행분(시도 551건 / 동의 47건)이 포함되어 있습니다.
+    1~8월은 <b>시도·동의건수 관리</b> 기간으로 인센티브가 적용되지 않으며, 인센티브는 <b>9월 자율참여</b>부터 적용됩니다.</div>
+  </div>`;
+}
+
+/* ================================ 월별 상세 뷰 (1~8월) ================================ */
+function viewMonth(mm){
+  const m = M.find(x=>x.m===mm);
+  const rows = m.agents.map(A);
+  const prev = M.find(x=>x.m===mm-1);
+  const diff = prev ? m.agr - prev.agr : null;
+  const diffChip = diff===null ? '' :
+    `<span class="chip ${diff>=0?'up':'dn'}">${diff>=0?'▲':'▼'} ${nf(Math.abs(diff))}건</span> <span class="mute">전월 대비</span>`;
+
+  const head = `
+  <div class="sec">
+    <div class="sec-hd"><h2>${mm}월 실적</h2><span class="desc">${esc(m.group)}${m.note?' · '+esc(m.note):''}</span>
+      <span class="right">단위 : 건</span></div>
+    <div class="grid g-5">
+      ${kpi('동의 획득', nf(m.agr), '건', diffChip, 'acc')}
+      ${kpi('시도', nf(m.att), '건', `1인 평균 ${(m.att/(m.hc||1)).toFixed(1)}건`, 'acc2')}
+      ${kpi('동의율', pct(m.agr,m.att), '', '동의 ÷ 시도', '')}
+      ${kpi('응대호', nf(m.calls), '콜', `미동의콜 ${nf(m.noncall)}`, '')}
+      ${kpi('운영 인원', nf(m.hc), '명', `1인 평균 동의 ${(m.agr/(m.hc||1)).toFixed(1)}건`, '')}
+    </div>
+  </div>`;
+
+  if(!rows.length) return head + `
+  <div class="sec"><div class="card"><div class="emptybox">
+    ${mm}월은 시범 운영 기간으로 <b>상담사별 상세 데이터가 집계되지 않았습니다.</b><br>
+    <span style="font-size:12px">전체 집계(시도 ${nf(m.att)}건 / 동의 ${nf(m.agr)}건)만 제공됩니다.</span>
+  </div></div></div>` + channelCard(m);
+
+  const byC = sortCenter(groupBy(rows, r=>r.center));
+  return head + `
+  <div class="sec">
+    <div class="sec-hd"><h2>센터별 · 팀별 실적</h2><span class="desc">${mm}월</span></div>
+    <div class="grid g-32">
+      <div class="card"><div class="tbl-scroll">${orgTable(rows)}</div></div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card card-pad">
+          <div style="font-size:13.5px;font-weight:700;margin-bottom:14px">센터별 동의 획득</div>
+          ${hBars(byC.map(c=>({l:c.key+'센터', sub:`${c.n}명`, v:c.agr, r:pct(c.agr,c.att),
+            c: c.key==='청주'?'#F37321': c.key==='서울'?'#4A6076':'#F0A05A'})))}
+        </div>
+        ${channelCard(m, true)}
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>상담원 Ranking</h2><span class="desc">${mm}월 동의건수 기준</span>
+      <span class="right">${nf(rows.length)}명</span></div>
+    <div class="card">
+      <div class="card-pad" style="padding-bottom:0">${searchBox('sm', '상담사명 · 사번 · 센터 · 팀 검색')}</div>
+      <div class="tbl-scroll">${rankTable(rows)}</div>
+    </div>
+  </div>`;
+}
+function channelCard(m, inner){
+  const c = m.ch;
+  return `<div class="card">${cardHd('채널별 동의 구성', m.m+'월')}
+    <div class="card-pad" style="padding-top:14px">
+      ${donut([{l:'전속',v:c.own,c:'#F37321'},{l:'GA',v:c.ga,c:'#4A6076'},{l:'전략',v:c.stg,c:'#F0C08A'}])}
+    </div></div>`;
+}
+
+/* ================================ 9월 자율참여 + 인센티브 뷰 ================================ */
+function viewSep(){
+  const roster = SEP.roster.map(r=>({center:r[0], team:r[1], id:r[2], name:r[3], join:!!r[4], agr:r[5]||0}))
+    .map(r=>({...r, inc:r.join?calcInc(r.agr):0, tier:r.join?tierOf(r.agr):null}));
+  const joined = roster.filter(r=>r.join);
+  const totAgr = joined.reduce((a,r)=>a+r.agr,0);
+  const totInc = joined.reduce((a,r)=>a+r.inc,0);
+  const ach = joined.filter(r=>r.inc>0);
+  const weeks = SEP.weeks||[];
+  const wAgr = weeks.reduce((a,w)=>a+(w.agr||0),0);
+  const empty = totAgr===0 && wAgr===0;
+
+  const tierStat = INC.tiers.map((t,i)=>{
+    const next = INC.tiers[i+1];
+    const list = joined.filter(r=> r.agr>=t.min && (!next || r.agr<next.min));
+    return {...t, people:list.length, amount:list.reduce((a,r)=>a+r.inc,0)};
+  });
+  const under = joined.filter(r=>r.agr < INC.tiers[0].min);
+
+  const banner = empty ? `<div class="notice" style="margin-bottom:16px"><span>✎</span><div>
+    <b>9월 실적 데이터 입력 대기</b> — 파일 상단 <b>DATA.sep</b> 영역의 <code>weeks</code>(주간 실적)와
+    <code>roster</code>(참여자별 동의건수)를 입력하시면 아래 모든 수치·그래프·인센티브가 자동 계산됩니다.
+    현재 참여자 명단 ${nf(roster.length)}명이 등록되어 있습니다.</div></div>` : '';
+
+  const centers = sortCenter(groupBy(joined, r=>r.center));
+
+  return banner + `
+  <div class="sec">
+    <div class="sec-hd"><h2>9월 자율참여 현황</h2>
+      <span class="desc">목표 없음 · 자율 참여 · 획득 건수에 따른 인센티브만 적용</span>
+      <span class="right">기준일 ${esc(DATA.meta.baseDate)}</span></div>
+    <div class="grid g-5">
+      ${kpi('동의 획득', nf(totAgr), '건', `참여자 1인 평균 ${(totAgr/(joined.length||1)).toFixed(1)}건`, 'acc')}
+      ${kpi('참여 인원', nf(joined.length), '명', `명단 ${nf(roster.length)}명 중 <b>${pct(joined.length,roster.length,0)}</b>`, 'acc2')}
+      ${kpi('인센티브 총액', won(totInc), '', `H-POINT ${nf(ach.length*INC.hpoint)}점 (${nf(ach.length)}명)`, 'acc')}
+      ${kpi('인센티브 달성자', nf(ach.length), '명', `참여자 대비 ${pct(ach.length,joined.length,0)}`, '')}
+      ${kpi('참여자 1인 평균 금액', won(totInc/(joined.length||1)), '', `달성자 평균 ${won(totInc/(ach.length||1))}`, '')}
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>주간 실적</h2><span class="desc">9월 이후 주차별 동의 획득</span></div>
+    <div class="grid g-32">
+      <div class="card card-pad">
+        ${weeks.length ? barChart(weeks.map((w,i)=>({l:w.label, l2:w.range, v:w.agr||0,
+            r:(w.att? (w.agr||0)/w.att:0), hi:i===weeks.length-1})), {line:true, h:236, aria:'주간 동의 건수'})
+          : '<div class="emptybox">주간 데이터가 없습니다.</div>'}
+      </div>
+      <div class="card"><div class="tbl-scroll">
+        <table><thead><tr><th class="l">주차</th><th class="l">기간</th><th>시도</th><th>동의</th><th>동의율</th></tr></thead><tbody>
+        ${weeks.map(w=>`<tr><td class="l"><b>${esc(w.label)}</b></td><td class="l mute">${esc(w.range||'')}</td>
+          <td class="num mute">${nf(w.att||0)}</td><td class="num" style="color:#D95E12;font-weight:700">${nf(w.agr||0)}</td>
+          <td class="num mute">${pct(w.agr||0,w.att||0)}</td></tr>`).join('')}
+        </tbody><tfoot><tr><td class="l">누계</td><td></td>
+          <td>${nf(weeks.reduce((a,w)=>a+(w.att||0),0))}</td>
+          <td style="color:#D95E12">${nf(wAgr)}</td>
+          <td>${pct(wAgr, weeks.reduce((a,w)=>a+(w.att||0),0))}</td></tr></tfoot></table>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>인센티브 현황</h2><span class="desc">전건 인센티브 적용 · 1인 월 상한 ${nf(INC.cap)}원</span></div>
+    <div class="grid g-3">
+      <div class="card card-pad">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:13px">구간별 지급 기준 · 인원</div>
+        <div class="tierbox">
+          ${tierStat.map((t,i)=>`<div class="tier t${i+1}"><span class="tn">${esc(t.name)}</span>
+            <span class="tl">${nf(t.min)}건 이상 · 전건 ${nf(t.rate)}원</span>
+            <span class="tv">${nf(t.people)}<small>명</small> · ${nf(t.amount)}<small>원</small></span></div>`).join('')}
+          <div class="tier"><span class="tn" style="background:#B0BAC4">미달성</span>
+            <span class="tl">${nf(INC.tiers[0].min)}건 미만</span>
+            <span class="tv">${nf(under.length)}<small>명</small> · 0<small>원</small></span></div>
+        </div>
+        <div class="notice gray" style="margin-top:13px;font-size:11.5px">
+          <span>ℹ</span><div>구간 도달 시 <b>전 건수에 해당 단가 적용</b>, 1인 월 상한 <b>${nf(INC.cap)}원</b>.
+          달성자 전원 <b>H-POINT ${nf(INC.hpoint)}점</b> 별도 지급.</div>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:13px">센터별 인센티브 · 평균 금액</div>
+        ${centers.length ? hBars(centers.map(c=>{
+          const ic = c.rows.reduce((a,r)=>a+r.inc,0);
+          return {l:c.key+'센터', sub:`${c.n}명`, v:ic, fmt:won(ic), r:'1인 평균 '+won(ic/(c.n||1)),
+            c: c.key==='청주'?'#F37321': c.key==='서울'?'#4A6076':'#F0A05A'};
+        })) : '<div class="emptybox">참여자가 없습니다.</div>'}
+        <div style="margin-top:16px;padding-top:13px;border-top:1px solid #EFF2F5">
+          <div class="stat-row"><span class="k">전체 평균 (참여자 기준)</span><span class="v">${won(totInc/(joined.length||1))}</span></div>
+          <div class="stat-row"><span class="k">전체 평균 (달성자 기준)</span><span class="v">${won(totInc/(ach.length||1))}</span></div>
+          <div class="stat-row"><span class="k">최고 지급액</span><span class="v">${won(Math.max(0,...joined.map(r=>r.inc)))}</span></div>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:13px">센터별 상세</div>
+        <table><thead><tr><th class="l">센터</th><th>참여</th><th>동의</th><th>달성</th><th>인센티브</th><th>1인 평균</th></tr></thead><tbody>
+        ${centers.map(c=>{
+          const ic = c.rows.reduce((a,r)=>a+r.inc,0), na = c.rows.filter(r=>r.inc>0).length;
+          return `<tr><td class="l"><b>${esc(c.key)}</b></td><td class="num mute">${nf(c.n)}</td>
+            <td class="num">${nf(c.agr)}</td><td class="num mute">${nf(na)}</td>
+            <td class="num" style="color:#D95E12;font-weight:700">${nf(ic)}</td>
+            <td class="num mute">${nf(ic/(c.n||1))}</td></tr>`;}).join('')}
+        </tbody><tfoot><tr><td class="l">합계</td><td>${nf(joined.length)}</td><td>${nf(totAgr)}</td>
+          <td>${nf(ach.length)}</td><td style="color:#D95E12">${nf(totInc)}</td>
+          <td>${nf(totInc/(joined.length||1))}</td></tr></tfoot></table>
+        <div class="notice gray" style="margin-top:13px;font-size:11.5px"><span>◷</span>
+          <div><b>${esc(DATA.simulation.label)}</b> (참고) · 참여 ${nf(DATA.simulation.people)}명 ·
+          달성 ${nf(DATA.simulation.achievers)}명 · 총 ${won(DATA.simulation.total)}</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>상담원 Ranking · 인센티브</h2>
+      <span class="desc">9월 동의건수 기준</span><span class="right">${nf(joined.length)}명 참여</span></div>
+    <div class="card">
+      <div class="card-pad" style="padding-bottom:0">${searchBox('ss','상담사명 · 사번 · 센터 · 팀 검색')}</div>
+      <div class="tbl-scroll">
+        <table><thead><tr><th class="c" style="width:44px">순위</th><th class="l">상담사</th><th class="l">센터</th>
+          <th class="l">팀</th><th class="c">참여</th><th>동의건수</th><th class="c">구간</th><th>인센티브</th><th class="c">H-POINT</th>
+        </tr></thead><tbody>
+        ${roster.slice().sort((a,b)=> b.agr-a.agr).map((r,i)=>`
+          <tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+r.id)}">
+            <td class="c"><span class="rk ${i<3&&r.agr>0?'r'+(i+1):''}">${i+1}</span></td>
+            <td class="l"><b>${esc(r.name)}</b> <span class="mute" style="font-size:11px">${esc(r.id)}</span></td>
+            <td class="l"><span class="pill c${CENTER_ORDER.indexOf(r.center)+1||''}">${esc(r.center)}</span></td>
+            <td class="l mute">${esc(r.team)}</td>
+            <td class="c">${r.join?'<span class="chip up">참여</span>':'<span class="chip">미참여</span>'}</td>
+            <td class="num" style="color:#D95E12;font-weight:700">${nf(r.agr)}</td>
+            <td class="c">${r.tier?`<span class="chip or">${esc(r.tier.name)}</span>`:'<span class="mute">-</span>'}</td>
+            <td class="num">${r.inc?won(r.inc):'<span class="mute">0원</span>'}</td>
+            <td class="c mute">${r.inc?nf(INC.hpoint)+'점':'-'}</td></tr>`).join('')}
+        </tbody><tfoot><tr><td></td><td class="l">합계</td><td></td><td></td><td class="c">${nf(joined.length)}명</td>
+          <td>${nf(totAgr)}</td><td class="c">${nf(ach.length)}명</td><td style="color:#D95E12">${won(totInc)}</td>
+          <td class="c">${nf(ach.length*INC.hpoint)}점</td></tr></tfoot></table>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ================================ 라우팅 ================================ */
+let cur = 'all';
+function go(v){
+  cur = v;
+  document.querySelectorAll('#tabs .tab').forEach(b=> b.classList.toggle('on', b.dataset.v === String(v)));
+  $('#view').innerHTML = v==='all' ? viewAll() : (v===9 ? viewSep() : viewMonth(Number(v)));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function renderTabs(){
+  const sepAgr = SEP.roster.reduce((a,r)=>a+(r[5]||0),0);
+  let h = `<button class="tab on" data-v="all" onclick="go('all')">전체 누적</button>`;
+  M.forEach(m=> h += `<button class="tab" data-v="${m.m}" onclick="go(${m.m})">${m.m}월</button>`);
+  h += `<button class="tab sep" data-v="9" onclick="go(9)">9월 자율참여${sepAgr?'<span class="dot"></span>':''}</button>`;
+  $('#tabs').innerHTML = h;
+}
+
+/* ================================ 메일 공유용 요약 ================================ */
+function mailSummary(){
+  const tot = M.reduce((a,m)=>({att:a.att+m.att, agr:a.agr+m.agr}),{att:0,agr:0});
+  const joined = SEP.roster.filter(r=>r[4]);
+  const sAgr = joined.reduce((a,r)=>a+(r[5]||0),0);
+  const sInc = joined.reduce((a,r)=>a+calcInc(r[5]||0),0);
+  const ach = joined.filter(r=>calcInc(r[5]||0)>0).length;
+  const L = [];
+  L.push(`[한화손해보험] 마케팅 활용동의 획득 실적 (기준일 ${DATA.meta.baseDate})`);
+  L.push('');
+  L.push(`■ 1~8월 누적 : 시도 ${nf(tot.att)}건 / 동의 ${nf(tot.agr)}건 (동의율 ${pct(tot.agr,tot.att)})`);
+  L.push('  · 월별 동의 : ' + M.map(m=>`${m.m}월 ${nf(m.agr)}`).join(' / '));
+  L.push('');
+  L.push(`■ 9월 자율참여 : 참여 ${nf(joined.length)}명 / 동의 ${nf(sAgr)}건`);
+  L.push(`  · 인센티브 ${won(sInc)} (달성 ${nf(ach)}명, 참여자 1인 평균 ${won(sInc/(joined.length||1))})`);
+  sortCenter(groupBy(joined.map(r=>({center:r[0],att:0,agr:r[5]||0,inc:calcInc(r[5]||0)})), r=>r.center))
+    .forEach(c=>{
+      const ic = c.rows.reduce((a,r)=>a+r.inc,0);
+      L.push(`  · ${c.key}센터 : 동의 ${nf(c.agr)}건 / 인센티브 ${won(ic)} / 1인 평균 ${won(ic/(c.n||1))}`);
+    });
+  L.push('');
+  L.push(`※ 인센티브 기준 : ${INC.tiers.map(t=>`${t.min}건 이상 전건 ${nf(t.rate)}원`).join(' · ')} / 1인 월 상한 ${nf(INC.cap)}원`);
+  return L.join('\n');
+}
+$('#btnCopy').onclick = function(){
+  const txt = mailSummary(), b = this;
+  const done = ok => { b.textContent = ok ? '✓ 복사 완료' : '복사 실패'; setTimeout(()=>b.textContent='메일 요약 복사', 1800); };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(txt).then(()=>done(true), ()=>fallback());
+  } else fallback();
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    let ok=false; try{ ok = document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta); done(ok);
+  }
+};
+
+/* ================================ 초기화 ================================ */
+$('#basisDate').textContent = DATA.meta.baseDate;
+$('#footL').innerHTML = `데이터 기준일 <b style="color:#6B7887">${esc(DATA.meta.baseDate)}</b>
+  · 최종 갱신 ${esc(DATA.meta.updatedAt)} · 작성 ${esc(DATA.meta.owner)}`;
+renderTabs();
+go('all');
+</script>
+</body>
+</html>
