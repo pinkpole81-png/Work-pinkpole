@@ -113,6 +113,9 @@ tr.clickable:hover{background:var(--hw-l)}
   color:#8A4211;display:flex;gap:9px;align-items:flex-start}
 .notice b{color:#6E340C}
 .notice.gray{background:#F7F9FA;border-color:var(--line);color:var(--ink-2)}
+.notice.sample{background:#FFF7E6;border-color:#F0D28A;color:#7A5A12}
+.notice.sample b{color:#5C4209}
+.btn.on{background:#F6C560;border-color:#F6C560;color:#4A3405;font-weight:700}
 .notice.gray b{color:var(--ink)}
 .legend{display:flex;gap:14px;font-size:11.5px;color:var(--gray);flex-wrap:wrap}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
@@ -154,6 +157,7 @@ svg{display:block;max-width:100%}
     <h1>마케팅 활용동의 획득 실적 대시보드</h1>
     <div class="topbar-right">
       <div class="basis">데이터 기준일 <b id="basisDate">-</b></div>
+      <button class="btn" id="btnSample">샘플</button>
       <button class="btn" id="btnCopy">메일 요약 복사</button>
       <button class="btn primary" onclick="window.print()">인쇄 / PDF</button>
     </div>
@@ -177,6 +181,10 @@ svg{display:block;max-width:100%}
    ※ 인센티브 금액 · 센터별 실적 · 랭킹은 입력하지 않습니다. 전부 자동 계산됩니다.
    ================================================================================ */
 const DATA = {
+
+  /* 샘플 데이터 모드 — 테스트용 가상 데이터로 화면을 미리 볼 때 true
+     실제 운영 데이터를 넣은 뒤에는 false 로 바꾸세요 (화면 우상단 버튼으로도 전환 가능) */
+  sampleMode: true,
 
   meta: {
     baseDate : "2026-09-05",      // ← ① 데이터 기준일
@@ -624,6 +632,78 @@ const DATA = {
       ["대구","대구3팀","8088473","오경혜", 1, 0],
       ["대구","대구3팀","8093395","김민정1", 1, 0]
     ]
+  },
+
+  /* ============================================================================
+     [테스트용 샘플] sampleMode:true 일 때만 사용됩니다. 실제 실적이 아닙니다.
+     8월 실적을 기준으로 만든 가상 데이터이며, 위 sep 의 실제 데이터는 그대로 보존됩니다.
+     실제 운영 시 sampleMode 를 false 로 바꾸면 즉시 원래 상태로 돌아갑니다.
+     ============================================================================ */
+  sampleSep: {
+    baseDate: "2026-09-25",
+    weeks: [
+      { label:"1주차", range:"9/01~9/04", att:3162, agr:529 },
+      { label:"2주차", range:"9/07~9/11", att:3045, agr:463 },
+      { label:"3주차", range:"9/14~9/18", att:2810, agr:380 },
+      { label:"4주차", range:"9/21~9/25", att:2695, agr:283 }
+    ],
+    roster: [
+      ["청주","특화팀","8061853","강유진", 1, 20],
+      ["청주","특화팀","8090949","권효순", 1, 44],
+      ["청주","특화팀","8092823","김선아", 1, 11],
+      ["청주","특화팀","8087860","김은영", 1, 27],
+      ["청주","특화팀","8093277","연다희", 1, 18],
+      ["청주","특화팀","8061833","오윤정", 1, 24],
+      ["청주","특화팀","8092830","원은경", 1, 35],
+      ["청주","특화팀","8061981","윤수정", 1, 74],
+      ["청주","특화팀","8093407","이상순", 1, 14],
+      ["청주","특화팀","8062026","이수진", 1, 39],
+      ["청주","특화팀","8088210","정나리", 1, 92],
+      ["청주","특화팀","8088428","조영미", 1, 174],
+      ["청주","청주3팀","8061893","권영희", 0, 0],
+      ["청주","청주3팀","8061952","김수지", 1, 14],
+      ["청주","청주3팀","8093272","김정은", 1, 25],
+      ["청주","청주3팀","8088437","김지안", 1, 16],
+      ["청주","청주3팀","8088413","이미영", 1, 5],
+      ["청주","청주3팀","8090121","이옥순", 0, 0],
+      ["청주","청주4팀","8061750","남궁정혜", 1, 10],
+      ["청주","청주4팀","8090132","조민정", 1, 28],
+      ["청주","청주4팀","8091106","박지영", 1, 33],
+      ["청주","청주4팀","8092147","강유정", 1, 16],
+      ["청주","청주4팀","8092839","조명옥", 1, 50],
+      ["청주","청주4팀","8093281","전연화", 1, 7],
+      ["청주","청주4팀","8093539","정선희", 0, 0],
+      ["청주","청주5팀","8092154","이종미", 1, 25],
+      ["청주","청주5팀","8092831","유나형", 1, 56],
+      ["청주","청주5팀","8093533","김미연", 1, 17],
+      ["청주","청주6팀","8093406","원혜경", 1, 21],
+      ["청주","청주6팀","8061944","정희진", 1, 34],
+      ["청주","청주6팀","8062019","노현", 1, 48],
+      ["청주","청주6팀","8062020","김소희", 1, 87],
+      ["청주","청주6팀","8090017","배민자", 1, 101],
+      ["청주","청주6팀","8091788","김지연", 1, 19],
+      ["청주","청주7팀","8092149","이선희", 1, 105],
+      ["청주","청주7팀","8088202","임영미", 0, 0],
+      ["청주","청주7팀","8090122","장미화", 1, 13],
+      ["청주","청주7팀","8090125","지민경", 0, 0],
+      ["청주","청주7팀","8091037","이화영", 1, 6],
+      ["청주","청주7팀","8091108","안혜은", 1, 11],
+      ["청주","청주7팀","8093405","박영아", 1, 100],
+      ["서울","서울3팀","8086714","주정미", 1, 52],
+      ["서울","서울2팀","8093432","김지혜", 1, 8],
+      ["대구","대구1팀","8091070","임지유", 0, 0],
+      ["대구","대구1팀","8089299","우혜진", 0, 0],
+      ["대구","대구1팀","8093675","신수영", 0, 0],
+      ["대구","대구2팀","8091350","엄미경", 1, 23],
+      ["대구","대구2팀","8088457","장은영", 0, 0],
+      ["대구","대구2팀","8090200","이한결", 0, 0],
+      ["대구","대구2팀","8090775","신선화", 1, 45],
+      ["대구","대구2팀","8092765","전지영", 1, 35],
+      ["대구","대구2팀","8093261","김민지", 1, 40],
+      ["대구","대구3팀","8093919","김영선", 0, 0],
+      ["대구","대구3팀","8088473","오경혜", 1, 12],
+      ["대구","대구3팀","8093395","김민정1", 1, 21]
+    ]
   }
 };
 /* ============================ 데이터 입력 영역 끝 ============================ */
@@ -637,7 +717,10 @@ const won = n => nf(n) + '원';
 const pct = (a,b,d=1) => b ? (a/b*100).toFixed(d)+'%' : '-';
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const CO = ['청주','서울','대구'];
-const M = DATA.months, SEP = DATA.sep, INC = DATA.incentive;
+const M = DATA.months, INC = DATA.incentive;
+let sampleOn = !!DATA.sampleMode;
+const SEP  = () => sampleOn ? DATA.sampleSep : DATA.sep;
+const BASE = () => (sampleOn && DATA.sampleSep.baseDate) ? DATA.sampleSep.baseDate : DATA.meta.baseDate;
 
 /* ---- 인센티브 : 구간 도달 시 전건 적용, 1인 월 상한 ---- */
 function tierOf(n){ let t=null; for(const x of INC.tiers) if(n>=x.min) t=x; return t; }
@@ -645,7 +728,7 @@ function calcInc(n){ const t=tierOf(n); return t ? Math.min(n*t.rate, INC.cap) :
 
 /* ---- 9월 집계 ---- */
 function sepData(){
-  const roster = SEP.roster.map(r=>{
+  const roster = SEP().roster.map(r=>{
     const agr = r[5]||0, join = !!r[4];
     return {center:r[0], team:r[1], id:r[2], name:r[3], join, agr,
             inc: join?calcInc(agr):0, tier: join?tierOf(agr):null};
@@ -661,7 +744,7 @@ function sepData(){
     agr: joined.reduce((a,r)=>a+r.agr,0),
     inc: joined.reduce((a,r)=>a+r.inc,0),
     ach: joined.filter(r=>r.inc>0).length,
-    weeks: SEP.weeks||[]};
+    weeks: SEP().weeks||[]};
 }
 
 /* ================================ 차트 ================================ */
@@ -739,7 +822,11 @@ function viewMain(){
   const under = S.joined.filter(r=>r.agr < INC.tiers[0].min).length;
 
   return `
-  ${empty?`<div class="notice" style="margin-top:20px"><span>✎</span><div>
+  ${sampleOn?`<div class="notice sample" style="margin-top:20px"><span>⚑</span><div>
+    <b>샘플 데이터 (테스트용)</b> — 지금 보이는 9월 수치는 <b>실제 실적이 아닌 가상 데이터</b>입니다.
+    화면 우상단 <b>[샘플]</b> 버튼으로 실제 데이터 화면과 전환할 수 있고,
+    파일 상단 <code>sampleMode: false</code> 로 바꾸면 영구히 해제됩니다.</div></div>`
+   : empty?`<div class="notice" style="margin-top:20px"><span>✎</span><div>
     <b>9월 실적 입력 대기</b> — 파일 상단 <b>DATA</b> 영역의 <code>sep.weeks</code>(주간 실적)와
     <code>sep.roster</code>(상담사별 동의건수)를 입력하시면 아래 주간 실적 · 센터별 실적 · 랭킹 · 인센티브가
     모두 자동 계산됩니다. 현재 참여자 명단 ${nf(S.roster.length)}명이 등록되어 있습니다.</div></div>`:''}
@@ -747,7 +834,7 @@ function viewMain(){
   <!-- ① 전체 동의 누적건수 -->
   <div class="sec">
     <div class="sec-hd"><h2>전체 누적 실적</h2><span class="desc">2026년 1월 ~ 8월</span>
-      <span class="right">데이터 기준일 ${esc(DATA.meta.baseDate)}</span></div>
+      <span class="right">데이터 기준일 ${esc(BASE())}</span></div>
     <div class="grid g-4">
       ${kpi('전체 동의 누적건수', nf(tot.agr), '건', `<span class="chip or">최고 ${best.m}월 ${nf(best.agr)}건</span>`, 'acc')}
       ${kpi('전체 시도 누적건수', nf(tot.att), '건', `월 평균 ${nf(tot.att/M.length)}건`, 'acc2')}
@@ -968,7 +1055,7 @@ function mailSummary(){
   const tot = M.reduce((a,m)=>({att:a.att+m.att, agr:a.agr+m.agr}),{att:0,agr:0});
   const S = sepData();
   const L = [];
-  L.push(`[한화손해보험] 마케팅 활용동의 획득 실적 (기준일 ${DATA.meta.baseDate})`);
+  L.push(`[한화손해보험] 마케팅 활용동의 획득 실적 (기준일 ${BASE()})` + (sampleOn ? '  ※ 샘플 데이터' : ''));
   L.push('');
   L.push(`■ 전체 동의 누적 : ${nf(tot.agr)}건 (시도 ${nf(tot.att)}건 / 동의율 ${pct(tot.agr,tot.att)})`);
   L.push('■ 월별 실적 (시도 / 동의 / 동의율)');
@@ -1006,10 +1093,24 @@ $('#btnCopy').onclick = function(){
   else fallback();
 };
 
+/* ================================ 샘플 모드 전환 ================================ */
+function paintChrome(){
+  $('#basisDate').textContent = BASE();
+  $('#btnSample').classList.toggle('on', sampleOn);
+  $('#btnSample').textContent = sampleOn ? '샘플 ON' : '샘플';
+  $('#btnSample').title = sampleOn ? '실제 데이터 화면으로 전환' : '테스트용 샘플 데이터로 전환';
+  $('#footL').innerHTML = `데이터 기준일 <b style="color:#6B7887">${esc(BASE())}</b>` +
+    (sampleOn ? ' <span style="color:#B08214;font-weight:700">· 샘플 데이터</span>' : '') +
+    ` · 최종 갱신 ${esc(DATA.meta.updatedAt)} · 작성 ${esc(DATA.meta.owner)}`;
+}
+$('#btnSample').onclick = () => {
+  sampleOn = !sampleOn;
+  paintChrome();
+  go(document.querySelector('#tabs .tab.on')?.dataset.v || 'main');
+};
+
 /* ================================ 초기화 ================================ */
-$('#basisDate').textContent = DATA.meta.baseDate;
-$('#footL').innerHTML = `데이터 기준일 <b style="color:#6B7887">${esc(DATA.meta.baseDate)}</b>
-  · 최종 갱신 ${esc(DATA.meta.updatedAt)} · 작성 ${esc(DATA.meta.owner)}`;
+paintChrome();
 renderTabs();
 go('main');
 </script>
