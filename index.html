@@ -21,6 +21,7 @@
   --slate:#464F69; --slate-l:#626C89;
   --line:#EAECF3; --line-2:#F2F4F8;
   --ground:#F6F7FB; --card:#FFFFFF;
+  --page:#FAFBFC; --tile:#F2F4F7; --tile-line:#E4E8EF;
   --up:#12A56A; --down:#E5533C;
   --r:16px; --r-sm:10px;
   --sh:0 1px 2px rgba(25,28,39,.04), 0 10px 26px -12px rgba(25,28,39,.14);
@@ -28,10 +29,12 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{background:var(--ground);color:var(--ink);font-size:15px;line-height:1.55;
+body{background:var(--page);color:var(--ink);font-size:15px;line-height:1.55;
   -webkit-font-smoothing:antialiased;
-  font-family:"Pretendard","Pretendard Variable","Malgun Gothic","맑은 고딕",
-    "Apple SD Gothic Neo","Noto Sans KR",system-ui,-apple-system,sans-serif}
+  /* 나눔고딕 우선. 미설치 PC 에서는 맑은 고딕 등으로 자동 대체 (외부 요청 없음) */
+  font-family:"NanumGothic","Nanum Gothic","나눔고딕","NanumBarunGothic",
+    "Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",
+    system-ui,-apple-system,sans-serif}
 .wrap{max-width:1320px;margin:0 auto;padding:0 26px 64px}
 
 /* ---------- Header ---------- */
@@ -88,12 +91,15 @@ body{background:var(--ground);color:var(--ink);font-size:15px;line-height:1.55;
 .g-32{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
 
 /* ---------- KPI tile ---------- */
-.kpi{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh)}
-.kpi-l{font-size:12.5px;color:var(--slate);font-weight:600;letter-spacing:.1px}
-.kpi-v{font-size:32px;font-weight:700;letter-spacing:-1.3px;margin-top:7px;line-height:1.08;
+/* 요약 타일 — 연회색 면에 상단 오렌지 라인(모서리를 따라 곡선으로 흐름) */
+.kpi{background:var(--tile);border:1px solid var(--tile-line);border-top:3px solid var(--hw);
+  border-radius:var(--r);padding:22px 24px;display:flex;flex-direction:column;justify-content:center}
+.kpi-l{font-size:13px;color:var(--slate);font-weight:700;letter-spacing:-.1px}
+.kpi-v{font-size:38px;font-weight:800;letter-spacing:-1.8px;margin-top:10px;line-height:1.05;
   font-variant-numeric:tabular-nums}
-.kpi-v .u{font-size:14px;font-weight:600;color:var(--slate-l);margin-left:3px;letter-spacing:0}
-.kpi-s{font-size:12px;color:var(--slate-l);margin-top:9px}
+.kpi-v .u{font-size:16px;font-weight:700;color:var(--slate);margin-left:4px;letter-spacing:0}
+.kpi-s{font-size:12.5px;color:var(--slate-l);margin-top:11px}
+.kpi.acc{border-top-color:var(--hw)}
 .kpi.acc .kpi-v{color:var(--hw-deep)}
 .chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;
   background:var(--line-2);color:var(--ink-2)}
@@ -102,11 +108,14 @@ body{background:var(--ground);color:var(--ink);font-size:15px;line-height:1.55;
 .chip.or{background:var(--hw-wash);color:var(--hw-deep)}
 
 /* ---------- Gauge / ring ---------- */
+.tile-bar{background:var(--tile);border:1px solid var(--tile-line);border-left:5px solid var(--hw);
+  border-radius:var(--r);box-shadow:none;display:flex;flex-direction:column}
+.tile-bar .gauge-wrap{flex:1;justify-content:center}
 .gauge-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
 .gauge-meta{display:flex;flex-direction:column;gap:11px;min-width:150px}
 .ring-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.ring{display:flex;flex-direction:column;align-items:center;gap:9px;padding:14px 8px;
-  border-radius:var(--r-sm);background:var(--ground)}
+.ring{display:flex;flex-direction:column;align-items:center;gap:9px;padding:16px 8px;
+  border-radius:var(--r-sm);background:var(--tile);border:1px solid var(--tile-line)}
 .ring-cap{text-align:center;line-height:1.35}
 .ring-cap b{display:block;font-size:12.5px;font-weight:700}
 .ring-cap span{font-size:11px;color:var(--slate-l)}
@@ -161,6 +170,7 @@ tr.clickable:hover{background:var(--hw-wash)}
   color:var(--slate-l);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .emptybox{padding:44px 20px;text-align:center;color:var(--slate);font-size:14px}
 svg{display:block;max-width:100%}
+svg text{font-family:inherit}
 svg .hit{fill:transparent;cursor:pointer}
 svg .hit:hover{fill:rgba(243,115,33,.06)}
 .card-hd{padding:18px 22px 0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
@@ -202,7 +212,8 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
   .topbar-in,.tabbar-in{padding-left:15px;padding-right:15px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media print{body{background:#fff}.tabbar,.btn,.toolbar{display:none!important}
-  .card,.kpi{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
+  .card{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
+  .kpi{break-inside:avoid}
   .hero-chart{background:#fff}
   .tbl-scroll{max-height:none;overflow:visible}.sec{break-inside:avoid}}
 </style>
@@ -901,7 +912,7 @@ function gauge(value, total, opt={}){
       role="img" aria-label="${esc(opt.aria||'비율')} ${(p*100).toFixed(0)}퍼센트">
     <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#FFB578"/><stop offset="100%" stop-color="#F37321"/></linearGradient></defs>
-    ${arc(0,1,'#EEF0F6',SW)}
+    ${arc(0,1,'#E2E6EE',SW)}
     ${p>0.004 ? arc(0,p,'url(#gg)',SW) : ''}
     <text x="${C}" y="${CY-26}" text-anchor="middle" font-size="34" font-weight="700"
       fill="#191C27" letter-spacing="-1.5" style="font-variant-numeric:tabular-nums">${(p*100).toFixed(0)}%</text>
@@ -916,7 +927,7 @@ function ring(value, total, color, opt={}){
   const len = 2*Math.PI*R;
   return `<svg viewBox="0 0 ${S} ${S}" style="width:${S}px;height:${S}px;flex:none"
       role="img" aria-label="${esc(opt.aria||'')} ${(p*100).toFixed(0)}퍼센트">
-    <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#EEF0F6" stroke-width="${SW}"/>
+    <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#E2E6EE" stroke-width="${SW}"/>
     ${p>0.004?`<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${color}" stroke-width="${SW}"
       stroke-linecap="round" stroke-dasharray="${(len*p).toFixed(1)} ${len.toFixed(1)}"
       transform="rotate(-90 ${C} ${C})"/>`:''}
@@ -971,7 +982,7 @@ function viewMain(){
     <div class="sec-hd"><h2>전체 누적 실적</h2><span class="desc">2026년 1월 ~ 8월</span>
       <span class="right">데이터 기준일 ${esc(BASE())}</span></div>
     <div class="grid" style="grid-template-columns:minmax(0,320px) minmax(0,1fr)">
-      <div class="card card-pad">
+      <div class="card tile-bar card-pad">
         <div class="ctitle">9월 참여율</div>
         ${empty ? `<div class="gauge-wrap">
           ${gauge(0, 1, {sub:'집계 전', aria:'9월 자율참여율'})}
