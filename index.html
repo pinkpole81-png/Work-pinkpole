@@ -183,7 +183,7 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
 .hero-top{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:6px}
 .hero-figs{display:flex;gap:30px;flex-wrap:wrap}
 .hero-figs .hf-l{display:block;font-size:12.5px;color:var(--slate);font-weight:600;margin-bottom:3px}
-.hero-figs b{font-size:30px;font-weight:700;letter-spacing:-1.1px;line-height:1;
+.hero-figs b{font-size:28px;font-weight:700;letter-spacing:-1.1px;line-height:1;
   font-variant-numeric:tabular-nums}
 .hero-figs b i{font-size:13px;font-weight:600;color:var(--slate-l);font-style:normal;margin-left:2px}
 .hero-figs div:first-child b{color:var(--hw-deep)}
@@ -857,8 +857,10 @@ function barChart(items, opt={}){
   }
   items.forEach((d,i)=>{
     const bx=x(i)-bw/2, by=y(d.v), bh=Math.max(2,PT+ih-by);
-    /* 각진 막대 — 값이 작은 달이 알약 모양으로 뭉개지지 않도록 모서리를 두지 않음 */
-    s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}"
+    /* 기본은 각진 막대. opt.round 지정 시 둥글게 하되 막대 높이의 절반을 넘지 않게 해
+       값이 작을 때 알약 모양으로 뭉개지는 것을 막는다 */
+    const rx = opt.round ? Math.min(opt.round, bw/2, bh/2) : 0;
+    s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}"${rx?` rx="${rx.toFixed(1)}"`:''}
          fill="${d.hi?'url(#bg2)':(opt.color||'url(#bg1)')}"/>`;
     if(d.v>0){
       const ins = bh >= 34*F;
@@ -1053,7 +1055,7 @@ function viewMain(){
       <div class="card card-pad">
         ${S.weeks.length ? barChart(S.weeks.map((w,i)=>({l:w.label, l2:w.range, v:w.agr||0,
             r:w.att?(w.agr||0)/w.att:0, hi:i===S.weeks.length-1})),
-            {line:true, fluid:true, w:720, h:300, fs:1.05, aria:'주간 동의건수'})
+            {line:true, fluid:true, w:720, h:300, fs:1.05, round:10, aria:'주간 동의건수'})
           : '<div class="emptybox">주간 데이터가 없습니다.</div>'}
       </div>
       <div class="card"><div class="tbl-scroll">
