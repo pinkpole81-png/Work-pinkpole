@@ -15,10 +15,10 @@
    ============================================================ */
 :root{
   color-scheme: light;
-  --hw:#F37321;  --hw-deep:#D4590F;  --hw-lite:#FF9F5A;  --hw-pale:#FFC79A;
+  --hw:#F37321;  --hw-deep:#BC4C08;  --hw-lite:#FF9F5A;  --hw-pale:#FFC79A;
   --hw-wash:#FFF3EA;
-  --ink:#191C27;  --ink-2:#384054;
-  --slate:#6E7891; --slate-l:#9AA3B8;
+  --ink:#191C27;  --ink-2:#2E3648;
+  --slate:#464F69; --slate-l:#626C89;
   --line:#EAECF3; --line-2:#F2F4F8;
   --ground:#F6F7FB; --card:#FFFFFF;
   --up:#12A56A; --down:#E5533C;
@@ -28,7 +28,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{background:var(--ground);color:var(--ink);font-size:14px;line-height:1.5;
+body{background:var(--ground);color:var(--ink);font-size:15px;line-height:1.55;
   -webkit-font-smoothing:antialiased;
   font-family:"Pretendard","Pretendard Variable","Malgun Gothic","맑은 고딕",
     "Apple SD Gothic Neo","Noto Sans KR",system-ui,-apple-system,sans-serif}
@@ -47,8 +47,8 @@ body{background:var(--ground);color:var(--ink);font-size:14px;line-height:1.5;
 .topbar h1{font-size:15px;font-weight:600;margin:0;padding-left:15px;color:var(--ink-2);
   border-left:1px solid var(--line);letter-spacing:-.3px}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.basis{background:var(--ground);border:1px solid var(--line);border-radius:9px;padding:7px 13px;
-  font-size:12px;color:var(--slate);white-space:nowrap}
+.basis{background:var(--ground);border:1px solid var(--line);border-radius:9px;padding:8px 14px;
+  font-size:12.5px;color:var(--slate);white-space:nowrap}
 .basis b{color:var(--ink);font-weight:700}
 .btn{background:var(--card);border:1px solid var(--line);color:var(--ink-2);border-radius:9px;
   padding:7px 13px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
@@ -63,8 +63,8 @@ body{background:var(--ground);color:var(--ink);font-size:14px;line-height:1.5;
 /* ---------- Tabs ---------- */
 .tabbar{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
 .tabbar-in{max-width:1320px;margin:0 auto;padding:9px 26px;display:flex;gap:4px;overflow-x:auto}
-.tab{appearance:none;background:none;border:0;border-radius:9px;padding:8px 14px;font:inherit;
-  font-size:13px;font-weight:600;color:var(--slate);cursor:pointer;white-space:nowrap;
+.tab{appearance:none;background:none;border:0;border-radius:9px;padding:9px 16px;font:inherit;
+  font-size:14px;font-weight:600;color:var(--slate);cursor:pointer;white-space:nowrap;
   transition:background .15s,color .15s}
 .tab:hover{color:var(--ink);background:var(--ground)}
 .tab:focus-visible{outline:2px solid var(--hw);outline-offset:1px}
@@ -76,9 +76,9 @@ body{background:var(--ground);color:var(--ink);font-size:14px;line-height:1.5;
 /* ---------- Section ---------- */
 .sec{margin-top:26px}
 .sec-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:13px;flex-wrap:wrap}
-.sec-hd h2{font-size:16px;font-weight:700;margin:0;letter-spacing:-.4px}
-.sec-hd .desc{font-size:12px;color:var(--slate-l)}
-.sec-hd .right{margin-left:auto;font-size:12px;color:var(--slate-l)}
+.sec-hd h2{font-size:17.5px;font-weight:700;margin:0;letter-spacing:-.4px}
+.sec-hd .desc{font-size:12.5px;color:var(--slate-l)}
+.sec-hd .right{margin-left:auto;font-size:12.5px;color:var(--slate-l)}
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh)}
 .card-pad{padding:20px 22px}
 .grid{display:grid;gap:16px}
@@ -89,13 +89,13 @@ body{background:var(--ground);color:var(--ink);font-size:14px;line-height:1.5;
 
 /* ---------- KPI tile ---------- */
 .kpi{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh)}
-.kpi-l{font-size:12px;color:var(--slate);font-weight:600;letter-spacing:.1px}
-.kpi-v{font-size:30px;font-weight:700;letter-spacing:-1.3px;margin-top:7px;line-height:1.08;
+.kpi-l{font-size:12.5px;color:var(--slate);font-weight:600;letter-spacing:.1px}
+.kpi-v{font-size:32px;font-weight:700;letter-spacing:-1.3px;margin-top:7px;line-height:1.08;
   font-variant-numeric:tabular-nums}
 .kpi-v .u{font-size:14px;font-weight:600;color:var(--slate-l);margin-left:3px;letter-spacing:0}
-.kpi-s{font-size:11.5px;color:var(--slate-l);margin-top:9px}
+.kpi-s{font-size:12px;color:var(--slate-l);margin-top:9px}
 .kpi.acc .kpi-v{color:var(--hw-deep)}
-.chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;
   background:var(--line-2);color:var(--ink-2)}
 .chip.up{background:#E7F7F0;color:var(--up)}
 .chip.dn{background:#FDECE8;color:var(--down)}
@@ -112,24 +112,25 @@ body{background:var(--ground);color:var(--ink);font-size:14px;line-height:1.5;
 .ring-cap span{font-size:11px;color:var(--slate-l)}
 
 /* ---------- Table ---------- */
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:11px 12px;text-align:right;border-bottom:1px solid var(--line-2);white-space:nowrap;
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:13px 13px;text-align:right;border-bottom:1px solid var(--line-2);white-space:nowrap;
   font-variant-numeric:tabular-nums}
-th{font-size:11px;color:var(--slate-l);font-weight:700;letter-spacing:.3px;background:var(--card);
+th{font-size:12px;color:var(--slate);font-weight:700;letter-spacing:.2px;background:var(--card);
   border-bottom:1px solid var(--line);position:sticky;top:0}
 th:first-child,td:first-child{text-align:left}
 th.l,td.l{text-align:left} th.c,td.c{text-align:center}
-tbody tr:hover{background:var(--ground)}
+tbody tr:nth-child(even){background:#FBFCFE}
+tbody tr:hover{background:var(--hw-wash)}
 tfoot td{font-weight:700;background:var(--ground);border-top:1px solid var(--line);border-bottom:0}
 .tbl-scroll{max-height:520px;overflow:auto;border-radius:0 0 var(--r) var(--r)}
-.mute{color:var(--slate-l);font-weight:400}
+.mute{color:var(--slate);font-weight:400}
 .agr{color:var(--hw-deep);font-weight:700}
 .rk{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:8px;
   background:var(--line-2);font-size:11px;font-weight:700;color:var(--ink-2)}
 .rk.r1{background:linear-gradient(145deg,var(--hw-lite),var(--hw));color:#fff}
 .rk.r2{background:var(--hw-pale);color:#7A3A0E}
 .rk.r3{background:var(--hw-wash);color:var(--hw-deep)}
-.pill{display:inline-block;padding:3px 9px;border-radius:7px;font-size:11.5px;font-weight:600;
+.pill{display:inline-block;padding:4px 10px;border-radius:7px;font-size:12.5px;font-weight:600;
   background:var(--line-2);color:var(--ink-2)}
 .pill.c1{background:#EDF2FA;color:#33547C}
 .pill.c2{background:#F3EEFB;color:#5B4290}
@@ -141,7 +142,7 @@ tr.clickable:hover{background:var(--hw-wash)}
   background:linear-gradient(90deg,var(--hw-lite),var(--hw))}
 
 /* ---------- misc ---------- */
-.inp{border:1px solid var(--line);border-radius:9px;padding:9px 13px;font:inherit;font-size:13px;
+.inp{border:1px solid var(--line);border-radius:9px;padding:10px 14px;font:inherit;font-size:14px;
   background:var(--ground);color:var(--ink);min-width:260px}
 .inp::placeholder{color:var(--slate-l)}
 .inp:focus{outline:none;background:var(--card);border-color:var(--hw-pale);
@@ -154,47 +155,47 @@ tr.clickable:hover{background:var(--hw-wash)}
 .notice.gray b{color:var(--ink-2)}
 .notice.sample{background:#FFF8E8;color:#7A5A12}
 .notice.sample b{color:#5C4209}
-.legend{display:flex;gap:16px;font-size:11.5px;color:var(--slate);flex-wrap:wrap}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--slate);flex-wrap:wrap}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
-.foot{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;
+.foot{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;
   color:var(--slate-l);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.emptybox{padding:44px 20px;text-align:center;color:var(--slate-l);font-size:13px}
+.emptybox{padding:44px 20px;text-align:center;color:var(--slate);font-size:14px}
 svg{display:block;max-width:100%}
 svg .hit{fill:transparent;cursor:pointer}
 svg .hit:hover{fill:rgba(243,115,33,.06)}
 .card-hd{padding:18px 22px 0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
-.card-hd h3{margin:0;font-size:14px;font-weight:700;letter-spacing:-.2px}
+.card-hd h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.2px}
 .card-hd .sub{font-size:11.5px;color:var(--slate-l)}
-.ctitle{font-size:14px;font-weight:700;letter-spacing:-.2px;margin-bottom:16px}
+.ctitle{font-size:15px;font-weight:700;letter-spacing:-.2px;margin-bottom:16px}
 /* 월별 실적 — 페이지에서 가장 크게 읽히는 히어로 차트 */
 .hero-chart{padding:22px 24px 10px;
   background:linear-gradient(180deg,#FFFBF7 0%,var(--card) 42%);
   box-shadow:0 1px 2px rgba(25,28,39,.05), 0 16px 40px -20px rgba(243,115,33,.30)}
 .hero-top{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:6px}
 .hero-figs{display:flex;gap:30px;flex-wrap:wrap}
-.hero-figs .hf-l{display:block;font-size:11.5px;color:var(--slate);font-weight:600;margin-bottom:3px}
-.hero-figs b{font-size:27px;font-weight:700;letter-spacing:-1.1px;line-height:1;
+.hero-figs .hf-l{display:block;font-size:12.5px;color:var(--slate);font-weight:600;margin-bottom:3px}
+.hero-figs b{font-size:30px;font-weight:700;letter-spacing:-1.1px;line-height:1;
   font-variant-numeric:tabular-nums}
 .hero-figs b i{font-size:13px;font-weight:600;color:var(--slate-l);font-style:normal;margin-left:2px}
 .hero-figs div:first-child b{color:var(--hw-deep)}
 .hero-top .legend{margin-left:auto;padding-bottom:4px}
-.stat-row{display:flex;justify-content:space-between;padding:10px 0;
-  border-bottom:1px solid var(--line-2);font-size:13px}
+.stat-row{display:flex;justify-content:space-between;padding:11px 0;
+  border-bottom:1px solid var(--line-2);font-size:14px}
 .stat-row:last-child{border-bottom:0}
 .stat-row .k{color:var(--slate)}
 .stat-row .v{font-weight:700;font-variant-numeric:tabular-nums}
 .tier{display:flex;align-items:center;gap:11px;padding:13px 15px;border-radius:var(--r-sm);
   background:var(--ground);margin-bottom:9px}
-.tier .tn{font-size:11px;font-weight:700;color:#fff;border-radius:7px;padding:3px 9px;flex:none;
+.tier .tn{font-size:12px;font-weight:700;color:#fff;border-radius:7px;padding:3px 9px;flex:none;
   background:var(--slate)}
 .tier.t1 .tn{background:var(--hw-pale);color:#7A3A0E}
 .tier.t2 .tn{background:var(--hw-lite)}
 .tier.t3 .tn{background:var(--hw)}
 .tier.t0 .tn{background:#C3C9D6}
-.tier .tl{font-size:12.5px;color:var(--ink-2)}
-.tier .tv{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;font-size:14px}
+.tier .tl{font-size:13.5px;color:var(--ink-2)}
+.tier .tv{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
 .tier .tv small{font-size:11px;color:var(--slate-l);font-weight:600;margin-left:3px}
-.hint{font-size:11.5px;color:var(--slate-l);margin-top:10px;line-height:1.65}
+.hint{font-size:12.5px;color:var(--slate-l);margin-top:10px;line-height:1.65}
 
 @media (max-width:1100px){.g-4{grid-template-columns:repeat(2,1fr)}.g-32,.g-3{grid-template-columns:1fr}}
 @media (max-width:720px){.g-4,.g-3,.g-2{grid-template-columns:1fr}.wrap{padding:0 15px 44px}
@@ -831,8 +832,8 @@ function barChart(items, opt={}){
       <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#FF8A33"/><stop offset="100%" stop-color="#E85E10"/></linearGradient>
       <linearGradient id="lnA" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#8E99B4" stop-opacity=".22"/>
-        <stop offset="100%" stop-color="#8E99B4" stop-opacity="0"/></linearGradient>
+        <stop offset="0%" stop-color="#7A85A3" stop-opacity=".22"/>
+        <stop offset="100%" stop-color="#7A85A3" stop-opacity="0"/></linearGradient>
     </defs>`;
   /* 컬럼 교차 밴드 — 월 구분을 눈으로 따라가기 쉽게 */
   if(opt.bands) items.forEach((d,i)=>{ if(i%2) s+=`<rect x="${PL+cw*i}" y="${PT-6}" width="${cw}"
@@ -840,7 +841,7 @@ function barChart(items, opt={}){
   for(let g=0;g<=4;g++){
     const gv=nice/4*g, gy=y(gv);
     s+=`<line x1="${PL}" x2="${W-PR}" y1="${gy}" y2="${gy}" stroke="${g?'#F2F4F8':'#E6E9F0'}"/>`;
-    s+=`<text x="${PL-10}" y="${gy+4*F}" text-anchor="end" font-size="${11*F}" fill="#9AA3B8">${nf(gv)}</text>`;
+    s+=`<text x="${PL-10}" y="${gy+4*F}" text-anchor="end" font-size="${11*F}" fill="#626C89">${nf(gv)}</text>`;
   }
   items.forEach((d,i)=>{
     const bx=x(i)-bw/2, by=y(d.v), bh=Math.max(2,PT+ih-by);
@@ -849,18 +850,18 @@ function barChart(items, opt={}){
     if(d.v>0){
       const ins = bh >= 34*F;
       s+=`<text x="${x(i)}" y="${ins?by+21*F:by-9*F}" text-anchor="middle" font-size="${13.5*F}"
-           font-weight="700" fill="${ins?'#FFFFFF':'#384054'}">${nf(d.v)}</text>`;
+           font-weight="700" fill="${ins?'#FFFFFF':'#2E3648'}">${nf(d.v)}</text>`;
     }
     if(d.hi && opt.badge){
       const tw=40*F, ty=by-13*F;
       s+=`<g><rect x="${x(i)-tw/2}" y="${ty-13*F}" width="${tw}" height="${17*F}" rx="${8.5*F}" fill="#FFF3EA"/>
         <text x="${x(i)}" y="${ty-0.5*F}" text-anchor="middle" font-size="${10.5*F}" font-weight="700"
-        fill="#D4590F">최고</text></g>`;
+        fill="#BC4C08">최고</text></g>`;
     }
     s+=`<text x="${x(i)}" y="${H-(opt.fluid?24*F:13)}" text-anchor="middle" font-size="${13*F}"
-         font-weight="${d.hi?700:600}" fill="${d.hi?'#D4590F':'#384054'}">${esc(d.l)}</text>`;
+         font-weight="${d.hi?700:600}" fill="${d.hi?'#BC4C08':'#2E3648'}">${esc(d.l)}</text>`;
     if(d.l2) s+=`<text x="${x(i)}" y="${H-(opt.fluid?7*F:2)}" text-anchor="middle" font-size="${11*F}"
-         fill="#9AA3B8">${esc(d.l2)}</text>`;
+         fill="#626C89">${esc(d.l2)}</text>`;
   });
   if(opt.line){
     const rs=items.map(d=>d.r||0), hi=Math.max(...rs), lo=Math.min(...rs);
@@ -868,13 +869,13 @@ function barChart(items, opt={}){
     const ly=v=>bBot-((v-(lo-span*.35))/(span*1.7||1))*(bBot-bTop);
     const pts=items.map((d,i)=>`${x(i)},${ly(d.r||0)}`).join(' ');
     s+=`<path d="M${PL},${bBot+2} L${pts.split(' ').join(' L')} L${W-PR},${bBot+2} Z" fill="url(#lnA)"/>`;
-    s+=`<polyline points="${pts}" fill="none" stroke="#6E7891" stroke-width="${2*F}" stroke-dasharray="${5*F} ${4*F}"/>`;
+    s+=`<polyline points="${pts}" fill="none" stroke="#464F69" stroke-width="${2*F}" stroke-dasharray="${5*F} ${4*F}"/>`;
     items.forEach((d,i)=>{
-      s+=`<circle cx="${x(i)}" cy="${ly(d.r||0)}" r="${4*F}" fill="#fff" stroke="#6E7891" stroke-width="${2*F}"/>`;
-      s+=`<text x="${x(i)}" y="${ly(d.r||0)-11*F}" text-anchor="middle" font-size="${11*F}" fill="#5A6480"
+      s+=`<circle cx="${x(i)}" cy="${ly(d.r||0)}" r="${4*F}" fill="#fff" stroke="#464F69" stroke-width="${2*F}"/>`;
+      s+=`<text x="${x(i)}" y="${ly(d.r||0)-11*F}" text-anchor="middle" font-size="${11*F}" fill="#464F69"
            font-weight="700" stroke="#fff" stroke-width="${3*F}" paint-order="stroke">${((d.r||0)*100).toFixed(1)}%</text>`;
     });
-    s+=`<text x="${W-PR+9}" y="${bBot+4*F}" font-size="${10.5*F}" fill="#9AA3B8">동의율</text>`;
+    s+=`<text x="${W-PR+9}" y="${bBot+4*F}" font-size="${10.5*F}" fill="#626C89">동의율</text>`;
   }
   if(opt.click){                                   /* 막대 영역 클릭 → 해당 월 상세 */
     items.forEach((d,i)=>{
@@ -904,7 +905,7 @@ function gauge(value, total, opt={}){
     ${p>0.004 ? arc(0,p,'url(#gg)',SW) : ''}
     <text x="${C}" y="${CY-26}" text-anchor="middle" font-size="34" font-weight="700"
       fill="#191C27" letter-spacing="-1.5" style="font-variant-numeric:tabular-nums">${(p*100).toFixed(0)}%</text>
-    <text x="${C}" y="${CY-6}" text-anchor="middle" font-size="11.5" fill="#9AA3B8">${esc(opt.sub||'')}</text>
+    <text x="${C}" y="${CY-6}" text-anchor="middle" font-size="11.5" fill="#626C89">${esc(opt.sub||'')}</text>
   </svg>`;
 }
 
@@ -921,7 +922,7 @@ function ring(value, total, color, opt={}){
       transform="rotate(-90 ${C} ${C})"/>`:''}
     <text x="${C}" y="${C+2}" text-anchor="middle" font-size="17" font-weight="700" fill="#191C27"
       letter-spacing="-.5" style="font-variant-numeric:tabular-nums">${nf(value)}</text>
-    <text x="${C}" y="${C+16}" text-anchor="middle" font-size="9.5" fill="#9AA3B8">${esc(opt.unit||'명')}</text>
+    <text x="${C}" y="${C+16}" text-anchor="middle" font-size="9.5" fill="#626C89">${esc(opt.unit||'명')}</text>
   </svg>`;
 }
 
@@ -929,7 +930,7 @@ function hBars(items){
   const max=Math.max(1,...items.map(d=>d.v));
   return `<div style="display:flex;flex-direction:column;gap:11px">`+items.map(d=>`
     <div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px">
-      <span style="font-weight:600;color:#384054">${esc(d.l)}${d.sub?` <span class="mute" style="font-weight:400">${esc(d.sub)}</span>`:''}</span>
+      <span style="font-weight:600;color:#2E3648">${esc(d.l)}${d.sub?` <span class="mute" style="font-weight:400">${esc(d.sub)}</span>`:''}</span>
       <span style="font-variant-numeric:tabular-nums"><b>${d.fmt||nf(d.v)}</b>${d.r?` <span class="mute">· ${esc(d.r)}</span>`:''}</span>
     </div>
     <div style="height:10px;background:#F2F4F8;border-radius:6px;overflow:hidden">
@@ -1021,7 +1022,7 @@ function viewMain(){
         <div class="legend">
           <span><i style="background:linear-gradient(180deg,#FFC08A,#FF9A4D)"></i>월 동의건수</span>
           <span><i style="background:linear-gradient(180deg,#FF8A33,#E85E10)"></i>최고 실적월</span>
-          <span><i style="background:#8E99B4"></i>동의율</span>
+          <span><i style="background:#7A85A3"></i>동의율</span>
         </div>
       </div>
       ${barChart(M.map(m=>({k:m.m, l:m.m+'월', l2:'시도 '+nf(m.att), v:m.agr,
@@ -1097,7 +1098,7 @@ function viewMain(){
       ${S.roster.slice().sort((a,b)=>b.agr-a.agr).map((r,i)=>`
         <tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+r.id)}">
           <td class="c"><span class="rk ${i<3&&r.agr>0?'r'+(i+1):''}">${i+1}</span></td>
-          <td class="l"><b>${esc(r.name)}</b> <span class="mute" style="font-size:11px">${esc(r.id)}</span></td>
+          <td class="l"><b>${esc(r.name)}</b> <span class="mute" style="font-size:12px">${esc(r.id)}</span></td>
           <td class="l"><span class="pill c${CO.indexOf(r.center)+1}">${esc(r.center)}</span></td>
           <td class="l mute">${esc(r.team)}</td>
           <td class="c">${r.join?'<span class="chip up">참여</span>':'<span class="chip">미참여</span>'}</td>
