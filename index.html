@@ -146,9 +146,8 @@ tfoot td{font-weight:700;background:var(--ground);border-top:1px solid var(--lin
 .pill.c3{background:#EAF6EF;color:#256B44}
 tr.clickable{cursor:pointer}
 tr.clickable:hover{background:var(--hw-wash)}
-.bar-cell{width:100%;min-width:70px;height:7px;background:var(--line-2);border-radius:5px;overflow:hidden}
-.bar-cell>i{display:block;height:100%;border-radius:5px;
-  background:linear-gradient(90deg,var(--hw-lite),var(--hw))}
+.bar-cell{width:100%;min-width:70px;height:8px;background:var(--line-2);overflow:hidden}
+.bar-cell>i{display:block;height:100%;background:var(--hw)}
 
 /* ---------- misc ---------- */
 .inp{border:1px solid var(--line);border-radius:9px;padding:10px 14px;font:inherit;font-size:14px;
@@ -851,12 +850,15 @@ function barChart(items, opt={}){
       height="${ih+12}" fill="#F7F8FC"/>`; });
   for(let g=0;g<=4;g++){
     const gv=nice/4*g, gy=y(gv);
-    s+=`<line x1="${PL}" x2="${W-PR}" y1="${gy}" y2="${gy}" stroke="${g?'#F2F4F8':'#E6E9F0'}"/>`;
+    /* 0 기준선은 진하게, 나머지 눈금선은 옅게 */
+    s+=`<line x1="${PL}" x2="${W-PR}" y1="${gy}" y2="${gy}" stroke="${g?'#EDEFF5':'#C9CFDD'}"
+         stroke-width="${g?1:1.5}"/>`;
     s+=`<text x="${PL-10}" y="${gy+4*F}" text-anchor="end" font-size="${11*F}" fill="#626C89">${nf(gv)}</text>`;
   }
   items.forEach((d,i)=>{
     const bx=x(i)-bw/2, by=y(d.v), bh=Math.max(2,PT+ih-by);
-    s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${Math.min(10,bw/2)}"
+    /* 각진 막대 — 값이 작은 달이 알약 모양으로 뭉개지지 않도록 모서리를 두지 않음 */
+    s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}"
          fill="${d.hi?'url(#bg2)':(opt.color||'url(#bg1)')}"/>`;
     if(d.v>0){
       const ins = bh >= 34*F;
@@ -944,8 +946,8 @@ function hBars(items){
       <span style="font-weight:600;color:#2E3648">${esc(d.l)}${d.sub?` <span class="mute" style="font-weight:400">${esc(d.sub)}</span>`:''}</span>
       <span style="font-variant-numeric:tabular-nums"><b>${d.fmt||nf(d.v)}</b>${d.r?` <span class="mute">· ${esc(d.r)}</span>`:''}</span>
     </div>
-    <div style="height:10px;background:#F2F4F8;border-radius:6px;overflow:hidden">
-      <div style="height:100%;width:${(d.v/max*100).toFixed(1)}%;background:${d.c||'#F37321'};border-radius:6px"></div>
+    <div style="height:11px;background:#EDEFF5;overflow:hidden">
+      <div style="height:100%;width:${(d.v/max*100).toFixed(1)}%;background:${d.c||'#F37321'}"></div>
     </div></div>`).join('')+'</div>';
 }
 const kpi=(l,v,u,s,c)=>`<div class="kpi ${c||''}"><div class="kpi-l">${l}</div>
