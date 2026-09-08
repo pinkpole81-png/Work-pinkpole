@@ -166,6 +166,18 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
 .card-hd h3{margin:0;font-size:14px;font-weight:700;letter-spacing:-.2px}
 .card-hd .sub{font-size:11.5px;color:var(--slate-l)}
 .ctitle{font-size:14px;font-weight:700;letter-spacing:-.2px;margin-bottom:16px}
+/* 월별 실적 — 페이지에서 가장 크게 읽히는 히어로 차트 */
+.hero-chart{padding:22px 24px 10px;
+  background:linear-gradient(180deg,#FFFBF7 0%,var(--card) 42%);
+  box-shadow:0 1px 2px rgba(25,28,39,.05), 0 16px 40px -20px rgba(243,115,33,.30)}
+.hero-top{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:6px}
+.hero-figs{display:flex;gap:30px;flex-wrap:wrap}
+.hero-figs .hf-l{display:block;font-size:11.5px;color:var(--slate);font-weight:600;margin-bottom:3px}
+.hero-figs b{font-size:27px;font-weight:700;letter-spacing:-1.1px;line-height:1;
+  font-variant-numeric:tabular-nums}
+.hero-figs b i{font-size:13px;font-weight:600;color:var(--slate-l);font-style:normal;margin-left:2px}
+.hero-figs div:first-child b{color:var(--hw-deep)}
+.hero-top .legend{margin-left:auto;padding-bottom:4px}
 .stat-row{display:flex;justify-content:space-between;padding:10px 0;
   border-bottom:1px solid var(--line-2);font-size:13px}
 .stat-row:last-child{border-bottom:0}
@@ -190,6 +202,7 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media print{body{background:#fff}.tabbar,.btn,.toolbar{display:none!important}
   .card,.kpi{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
+  .hero-chart{background:#fff}
   .tbl-scroll{max-height:none;overflow:visible}.sec{break-inside:avoid}}
 </style>
 </head>
@@ -796,62 +809,82 @@ function sepData(){
 
 /* ================================ 차트 ================================ */
 function barChart(items, opt={}){
-  const W=opt.w||760, H=opt.h||240, PL=48, PR=opt.line?46:16, PT=18, PB=34;
+  /* fluid:true → viewBox 비율대로 컨테이너 폭을 꽉 채움 (height:auto)
+     이전에는 height 를 px 로 고정해 넓은 카드에서 좌우 여백이 생겼음 */
+  const W=opt.w||760, H=opt.h||240;
+  const F=opt.fs||1;                                  /* 글자 크기 배율 */
+  const PL=Math.round(54*F), PR=opt.line?Math.round(52*F):20, PT=Math.round(20*F), PB=Math.round(44*F);
   const iw=W-PL-PR, ih=H-PT-PB;
   const max=Math.max(1,...items.map(d=>d.v));
   const step = max>2000?500 : max>500?100 : max>100?20 : max>20?5 : 1;
   const nice=Math.max(4, Math.ceil(max/step)*step);   /* 값이 작을 때 눈금 중복 방지 */
-  const bw=Math.min(48, iw/items.length*0.56);
-  const x=i=>PL+iw/items.length*(i+0.5);
-  const ihB = opt.line ? ih*0.72 : ih;            /* 동의율 라인과 겹치지 않도록 막대는 하단 72% */
+  const cw=iw/items.length;
+  const bw=Math.min(opt.bw||56, cw*0.52);
+  const x=i=>PL+cw*(i+0.5);
+  const ihB = opt.line ? ih*0.72 : ih;                /* 동의율 라인과 겹치지 않게 막대는 하단 72% */
   const y=v=>PT+ih-(v/nice)*ihB;
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.aria||'차트')}" style="width:100%;height:${H}px">
+  const style = opt.fluid ? 'width:100%;height:auto' : `width:100%;height:${H}px`;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.aria||'차트')}" style="${style}">
     <defs>
       <linearGradient id="bg1" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#FFB578"/><stop offset="100%" stop-color="#FF9A4D"/></linearGradient>
+        <stop offset="0%" stop-color="#FFC08A"/><stop offset="100%" stop-color="#FF9A4D"/></linearGradient>
       <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#FF9040"/><stop offset="100%" stop-color="#F37321"/></linearGradient>
+        <stop offset="0%" stop-color="#FF8A33"/><stop offset="100%" stop-color="#E85E10"/></linearGradient>
+      <linearGradient id="lnA" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8E99B4" stop-opacity=".22"/>
+        <stop offset="100%" stop-color="#8E99B4" stop-opacity="0"/></linearGradient>
     </defs>`;
+  /* 컬럼 교차 밴드 — 월 구분을 눈으로 따라가기 쉽게 */
+  if(opt.bands) items.forEach((d,i)=>{ if(i%2) s+=`<rect x="${PL+cw*i}" y="${PT-6}" width="${cw}"
+      height="${ih+12}" fill="#F7F8FC"/>`; });
   for(let g=0;g<=4;g++){
     const gv=nice/4*g, gy=y(gv);
     s+=`<line x1="${PL}" x2="${W-PR}" y1="${gy}" y2="${gy}" stroke="${g?'#F2F4F8':'#E6E9F0'}"/>`;
-    s+=`<text x="${PL-8}" y="${gy+4}" text-anchor="end" font-size="10.5" fill="#9AA3B8">${nf(gv)}</text>`;
+    s+=`<text x="${PL-10}" y="${gy+4*F}" text-anchor="end" font-size="${11*F}" fill="#9AA3B8">${nf(gv)}</text>`;
   }
   items.forEach((d,i)=>{
-    const bx=x(i)-bw/2, by=y(d.v), bh=Math.max(1,PT+ih-by);
-    s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${Math.min(8,bw/2)}"
+    const bx=x(i)-bw/2, by=y(d.v), bh=Math.max(2,PT+ih-by);
+    s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${Math.min(10,bw/2)}"
          fill="${d.hi?'url(#bg2)':(opt.color||'url(#bg1)')}"/>`;
     if(d.v>0){
-      const ins = bh>=30;
-      s+=`<text x="${x(i)}" y="${ins?by+15:by-6}" text-anchor="middle" font-size="11" font-weight="700"
-           fill="${ins?'#FFFFFF':'#33414F'}">${nf(d.v)}</text>`;
+      const ins = bh >= 34*F;
+      s+=`<text x="${x(i)}" y="${ins?by+21*F:by-9*F}" text-anchor="middle" font-size="${13.5*F}"
+           font-weight="700" fill="${ins?'#FFFFFF':'#384054'}">${nf(d.v)}</text>`;
     }
-    s+=`<text x="${x(i)}" y="${H-13}" text-anchor="middle" font-size="11.5" font-weight="${d.hi?700:500}"
-         fill="${d.hi?'#D4590F':'#6E7891'}">${esc(d.l)}</text>`;
-    if(d.l2) s+=`<text x="${x(i)}" y="${H-2}" text-anchor="middle" font-size="9.5" fill="#9AA3B8">${esc(d.l2)}</text>`;
+    if(d.hi && opt.badge){
+      const tw=40*F, ty=by-13*F;
+      s+=`<g><rect x="${x(i)-tw/2}" y="${ty-13*F}" width="${tw}" height="${17*F}" rx="${8.5*F}" fill="#FFF3EA"/>
+        <text x="${x(i)}" y="${ty-0.5*F}" text-anchor="middle" font-size="${10.5*F}" font-weight="700"
+        fill="#D4590F">최고</text></g>`;
+    }
+    s+=`<text x="${x(i)}" y="${H-(opt.fluid?24*F:13)}" text-anchor="middle" font-size="${13*F}"
+         font-weight="${d.hi?700:600}" fill="${d.hi?'#D4590F':'#384054'}">${esc(d.l)}</text>`;
+    if(d.l2) s+=`<text x="${x(i)}" y="${H-(opt.fluid?7*F:2)}" text-anchor="middle" font-size="${11*F}"
+         fill="#9AA3B8">${esc(d.l2)}</text>`;
   });
   if(opt.line){
     const rs=items.map(d=>d.r||0), hi=Math.max(...rs), lo=Math.min(...rs);
-    const span=(hi-lo)||Math.max(hi,.01), bTop=PT+18, bBot=PT+ih*0.24;
+    const span=(hi-lo)||Math.max(hi,.01), bTop=PT+20*F, bBot=PT+ih*0.24;
     const ly=v=>bBot-((v-(lo-span*.35))/(span*1.7||1))*(bBot-bTop);
-    s+=`<polyline points="${items.map((d,i)=>`${x(i)},${ly(d.r||0)}`).join(' ')}" fill="none"
-         stroke="#6E7891" stroke-width="1.8" stroke-dasharray="4 3"/>`;
+    const pts=items.map((d,i)=>`${x(i)},${ly(d.r||0)}`).join(' ');
+    s+=`<path d="M${PL},${bBot+2} L${pts.split(' ').join(' L')} L${W-PR},${bBot+2} Z" fill="url(#lnA)"/>`;
+    s+=`<polyline points="${pts}" fill="none" stroke="#6E7891" stroke-width="${2*F}" stroke-dasharray="${5*F} ${4*F}"/>`;
     items.forEach((d,i)=>{
-      s+=`<circle cx="${x(i)}" cy="${ly(d.r||0)}" r="3.5" fill="#fff" stroke="#6E7891" stroke-width="1.8"/>`;
-      s+=`<text x="${x(i)}" y="${ly(d.r||0)-9}" text-anchor="middle" font-size="9.5" fill="#6E7891" font-weight="600"
-           stroke="#fff" stroke-width="2.5" paint-order="stroke">${((d.r||0)*100).toFixed(1)}%</text>`;
+      s+=`<circle cx="${x(i)}" cy="${ly(d.r||0)}" r="${4*F}" fill="#fff" stroke="#6E7891" stroke-width="${2*F}"/>`;
+      s+=`<text x="${x(i)}" y="${ly(d.r||0)-11*F}" text-anchor="middle" font-size="${11*F}" fill="#5A6480"
+           font-weight="700" stroke="#fff" stroke-width="${3*F}" paint-order="stroke">${((d.r||0)*100).toFixed(1)}%</text>`;
     });
-    s+=`<text x="${W-PR+8}" y="${bBot+4}" font-size="10" fill="#9AA3B8">동의율</text>`;
+    s+=`<text x="${W-PR+9}" y="${bBot+4*F}" font-size="${10.5*F}" fill="#9AA3B8">동의율</text>`;
   }
   if(opt.click){                                   /* 막대 영역 클릭 → 해당 월 상세 */
-    const cw = iw/items.length;
     items.forEach((d,i)=>{
-      s+=`<rect class="hit" x="${PL+cw*i}" y="${PT-10}" width="${cw}" height="${ih+34}" rx="4"
+      s+=`<rect class="hit" x="${PL+cw*i}" y="${PT-10}" width="${cw}" height="${ih+PB}" rx="6"
            onclick="${opt.click}(${d.k})"><title>${esc(d.l)} 엑셀 상세 보기</title></rect>`;
     });
   }
   return s+'</svg>';
 }
+
 /* 반원 게이지 — 비율 하나를 크게 보여줄 때 */
 function gauge(value, total, opt={}){
   const W=232, H=140, C=W/2, CY=118, R=88, SW=17;
@@ -978,15 +1011,23 @@ function viewMain(){
   <div class="sec">
     <div class="sec-hd"><h2>월별 실적</h2><span class="desc">막대 = 동의건수 · 점선 = 동의율 · 하단 = 시도건수</span>
       <span class="right">그래프의 월을 클릭하면 해당 월 엑셀 상세가 열립니다</span></div>
-    <div class="card card-pad">
-      ${barChart(M.map(m=>({k:m.m, l:m.m+'월', l2:'시도 '+nf(m.att), v:m.agr,
-        r:m.att?m.agr/m.att:0, hi:m.m===best.m})), {line:true, h:300, click:'go', aria:'월별 동의건수 및 동의율'})}
-      <div class="legend" style="margin-top:10px;padding-top:11px;border-top:1px solid var(--line-2)">
-        <span><i style="background:#FF9F5A"></i>월 동의건수</span>
-        <span><i style="background:#F37321"></i>최고 실적월 (${best.m}월 ${nf(best.agr)}건)</span>
-        <span><i style="background:#6E7891"></i>동의율</span>
-        <span style="margin-left:auto">1~8월 합계 · 시도 ${nf(tot.att)}건 / 동의 ${nf(tot.agr)}건 / 동의율 ${pct(tot.agr,tot.att)}</span>
+    <div class="card hero-chart">
+      <div class="hero-top">
+        <div class="hero-figs">
+          <div><span class="hf-l">누적 동의</span><b>${nf(tot.agr)}<i>건</i></b></div>
+          <div><span class="hf-l">누적 시도</span><b>${nf(tot.att)}<i>건</i></b></div>
+          <div><span class="hf-l">평균 동의율</span><b>${pct(tot.agr,tot.att)}</b></div>
+        </div>
+        <div class="legend">
+          <span><i style="background:linear-gradient(180deg,#FFC08A,#FF9A4D)"></i>월 동의건수</span>
+          <span><i style="background:linear-gradient(180deg,#FF8A33,#E85E10)"></i>최고 실적월</span>
+          <span><i style="background:#8E99B4"></i>동의율</span>
+        </div>
       </div>
+      ${barChart(M.map(m=>({k:m.m, l:m.m+'월', l2:'시도 '+nf(m.att), v:m.agr,
+        r:m.att?m.agr/m.att:0, hi:m.m===best.m})),
+        {line:true, fluid:true, bands:true, badge:true, w:1180, h:400, fs:1.18, bw:64,
+         click:'go', aria:'월별 동의건수 및 동의율'})}
     </div>
   </div>
 
@@ -997,7 +1038,8 @@ function viewMain(){
     <div class="grid g-32">
       <div class="card card-pad">
         ${S.weeks.length ? barChart(S.weeks.map((w,i)=>({l:w.label, l2:w.range, v:w.agr||0,
-            r:w.att?(w.agr||0)/w.att:0, hi:i===S.weeks.length-1})), {line:true,h:240,aria:'주간 동의건수'})
+            r:w.att?(w.agr||0)/w.att:0, hi:i===S.weeks.length-1})),
+            {line:true, fluid:true, w:720, h:300, fs:1.05, aria:'주간 동의건수'})
           : '<div class="emptybox">주간 데이터가 없습니다.</div>'}
       </div>
       <div class="card"><div class="tbl-scroll">
