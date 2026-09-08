@@ -85,6 +85,11 @@ body{background:var(--page);color:var(--ink);font-size:15px;line-height:1.55;
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh)}
 .card-pad{padding:20px 22px}
 .grid{display:grid;gap:16px}
+/* 그리드/플렉스 자식은 기본 min-width:auto 라서 내용(넓은 표)이 칸을 밀어낸다.
+   0 으로 낮춰야 표가 자기 영역 안에서 가로 스크롤된다 */
+.grid>*{min-width:0}
+.card{overflow:hidden}
+.tbl-scroll{max-width:100%}
 .g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .g-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .g-4{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -167,6 +172,16 @@ tr.clickable:hover{background:var(--hw-wash)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
 .foot{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;
   color:var(--slate-l);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.nojs{background:var(--tile);border:1px solid var(--tile-line);border-top:3px solid var(--hw);
+  border-radius:var(--r);padding:26px 24px;margin-top:24px;font-size:14px;line-height:1.7}
+.nojs>b{font-size:16px}
+.nojs p{color:var(--slate);margin:10px 0 0}
+.nojs-figs{display:flex;gap:28px;flex-wrap:wrap;margin-top:18px;padding-top:18px;
+  border-top:1px solid var(--tile-line)}
+.nojs-figs span{display:block;font-size:12.5px;color:var(--slate);font-weight:700}
+.nojs-figs b{font-size:26px;letter-spacing:-1px}
+.nojs-figs div:first-child b{color:var(--hw-deep)}
+.nojs-sub{font-size:12px;color:var(--slate-l)!important;margin-top:16px!important}
 .emptybox{padding:44px 20px;text-align:center;color:var(--slate);font-size:14px}
 svg{display:block;max-width:100%}
 svg text{font-family:inherit}
@@ -207,8 +222,23 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
 .hint{font-size:12.5px;color:var(--slate-l);margin-top:10px;line-height:1.65}
 
 @media (max-width:1100px){.g-4{grid-template-columns:repeat(2,1fr)}.g-32,.g-3{grid-template-columns:1fr}}
-@media (max-width:720px){.g-4,.g-3,.g-2{grid-template-columns:1fr}.wrap{padding:0 15px 44px}
-  .topbar-in,.tabbar-in{padding-left:15px;padding-right:15px}}
+@media (max-width:720px){
+  .g-4,.g-3,.g-2{grid-template-columns:1fr}
+  .grid[style*="320px"]{grid-template-columns:1fr!important}
+  .wrap{padding:0 14px 40px}
+  .topbar-in,.tabbar-in{padding-left:14px;padding-right:14px}
+  .topbar h1{padding-left:0;border-left:0;font-size:14px;width:100%}
+  .topbar-right{margin-left:0;width:100%}
+  .hero-top{gap:14px}.hero-figs{gap:20px}.hero-figs b{font-size:24px}
+  .hero-top .legend{margin-left:0}
+  .hero-chart{padding:18px 14px 8px}
+  .card-pad{padding:16px 15px}
+  .kpi{padding:18px 17px}.kpi-v{font-size:30px}
+  .ring-row{grid-template-columns:1fr}
+  .inp{min-width:0;width:100%}
+  .gauge-wrap{justify-content:center}
+  table{font-size:13px}th,td{padding:10px 10px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media print{body{background:#fff}.tabbar,.btn,.toolbar{display:none!important}
   .card{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
@@ -237,7 +267,21 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
 
 <nav class="tabbar"><div class="tabbar-in" id="tabs"></div></nav>
 
-<div class="wrap"><main id="view"></main>
+<div class="wrap">
+  <noscript>
+    <div class="nojs">
+      <b>이 페이지를 보려면 자바스크립트가 필요합니다.</b>
+      <p>메일 앱의 첨부파일 미리보기에서는 화면이 비어 보일 수 있습니다.
+         파일을 <b>내려받아 브라우저(크롬 · 사파리 · 엣지)로 열어주세요.</b></p>
+      <div class="nojs-figs">
+        <div><span>1~8월 누적 동의</span><b>11,435건</b></div>
+        <div><span>1~8월 누적 시도</span><b>61,471건</b></div>
+        <div><span>평균 동의율</span><b>18.6%</b></div>
+      </div>
+      <p class="nojs-sub">한화손보 고객상담파트 내부보고용</p>
+    </div>
+  </noscript>
+  <main id="view"></main>
   <div class="foot"><div id="footL"></div><div>한화손보 고객상담파트 내부보고용</div></div>
 </div>
 
@@ -1232,8 +1276,20 @@ function filterRows(inp){
 }
 function go(v){
   document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.toggle('on', b.dataset.v===String(v)));
-  $('#view').innerHTML = v==='main' ? viewMain() : viewMonth(Number(v));
-  window.scrollTo({top:0, behavior:'smooth'});
+  try{
+    $('#view').innerHTML = v==='main' ? viewMain() : viewMonth(Number(v));
+  }catch(err){
+    /* 화면 전체를 JS 로 그리므로, 오류가 나면 백지 대신 원인을 보여준다 */
+    $('#view').innerHTML = '<div class="nojs" style="margin-top:24px">'
+      + '<b>화면을 그리는 중 오류가 발생했습니다.</b>'
+      + '<p>크롬 · 사파리 · 엣지 최신 버전에서 열어주세요.</p>'
+      + '<p style="font-size:12px;color:#626C89">' + esc(String((err && err.message) || err)) + '</p>'
+      + '<div class="nojs-figs"><div><span>1~8월 누적 동의</span><b>'
+      + nf(M.reduce(function(a,m){return a+m.agr;},0)) + '건</b></div>'
+      + '<div><span>1~8월 누적 시도</span><b>'
+      + nf(M.reduce(function(a,m){return a+m.att;},0)) + '건</b></div></div></div>';
+  }
+  try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
 }
 function renderTabs(){
   $('#tabs').innerHTML = `<button class="tab on first" data-v="main" onclick="go('main')">대시보드</button>` +
@@ -1296,13 +1352,24 @@ function paintChrome(){
 $('#btnSample').onclick = () => {
   sampleOn = !sampleOn;
   paintChrome();
-  go(document.querySelector('#tabs .tab.on')?.dataset.v || 'main');
+  var onTab = document.querySelector('#tabs .tab.on');
+  go(onTab && onTab.dataset.v ? onTab.dataset.v : 'main');
 };
 
 /* ================================ 초기화 ================================ */
-paintChrome();
-renderTabs();
-go('main');
+try{
+  paintChrome();
+  renderTabs();
+  go('main');
+}catch(err){
+  document.getElementById('view').innerHTML = '<div class="nojs" style="margin-top:24px">'
+    + '<b>대시보드를 불러오지 못했습니다.</b>'
+    + '<p>사용 중인 브라우저가 이 페이지를 지원하지 않을 수 있습니다. '
+    + '크롬 · 사파리 · 엣지 최신 버전에서 열어주세요.</p>'
+    + '<p style="font-size:12px;color:#626C89">'
+    + String((err && err.message) || err).replace(/[&<>]/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }) + '</p></div>';
+}
 </script>
 </body>
 </html>
