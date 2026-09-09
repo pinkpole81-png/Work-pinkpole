@@ -1492,6 +1492,74 @@ function viewMonth(mm){
   </div>`;
 }
 
+/* ================================ 9월 상세 (자율참여) ================================ */
+function viewSepMonth(){
+  const S = sepData();
+  const wAtt = S.weeks.reduce((a,w)=>a+(w.att||0),0);
+  const wAgr = S.weeks.reduce((a,w)=>a+(w.agr||0),0);
+  const empty = S.agr===0 && wAgr===0;
+
+  const head = `
+  <div class="sec">
+    <div class="sec-hd"><h2>${SEP().m}월 실적</h2>
+      <span class="desc">자율참여 · 목표 없음 · 획득 건수에 따른 인센티브만 적용</span>
+      <span class="right"><button class="tab" style="padding:4px 12px;font-size:12.5px;
+        border:1px solid var(--line);border-radius:8px" onclick="go('main')">← 대시보드</button></span></div>
+    <div class="grid g-3">
+      ${kpi('시도건수', nf(wAtt), '건', '', '')}
+      ${kpi('동의건수', nf(S.agr), '건', `참여 ${nf(S.joined.length)}명 / 명단 ${nf(S.roster.length)}명`, 'acc')}
+      ${kpi('동의율', pct(wAgr,wAtt), '', '동의 ÷ 시도', '')}
+    </div>
+  </div>`;
+
+  if(empty) return head + `<div class="sec"><div class="card"><div class="emptybox">
+    ${SEP().m}월 실적이 아직 입력되지 않았습니다.</div></div></div>`;
+
+  const rows = S.roster.slice().sort((a,b)=> b.agr-a.agr || (b.join?1:0)-(a.join?1:0));
+  return head + `
+  <div class="sec">
+    <div class="sec-hd"><h2>주차별 실적</h2><span class="desc">기준일 ${esc(BASE())}</span></div>
+    <div class="card"><div class="tbl-scroll">
+      <table><thead><tr><th class="l">주차</th><th class="l">기간</th><th>시도건수</th>
+        <th>동의건수</th><th>동의율</th></tr></thead><tbody>
+      ${S.weeks.map(w=>`<tr><td class="l"><b>${esc(w.label)}</b></td>
+        <td class="l mute">${esc(w.range||'')}</td><td>${nf(w.att||0)}</td>
+        <td class="agr">${nf(w.agr||0)}</td><td class="mute">${pct(w.agr||0,w.att||0)}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td class="l">누계</td><td></td><td>${nf(wAtt)}</td>
+        <td class="agr">${nf(wAgr)}</td><td>${pct(wAgr,wAtt)}</td></tr></tfoot></table>
+    </div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><h2>상담사별 상세</h2>
+      <span class="desc">동의건수 · 구간 · 인센티브</span>
+      <span class="right">참여 ${nf(S.joined.length)}명 / 명단 ${nf(S.roster.length)}명</span></div>
+    <div class="card">
+      <div class="card-pad" style="padding-bottom:0"><div class="toolbar">
+        <input class="inp" id="q3" placeholder="상담사명 · 사번 · 센터 · 팀 검색" oninput="filterRows(this)">
+        <span class="mute" id="q3_c" style="font-size:12.5px"></span></div></div>
+      <div class="tbl-scroll">
+      <table><thead><tr><th class="c" style="width:46px">순위</th><th class="l">센터</th><th class="l">팀</th>
+        <th class="l">사번</th><th class="l">상담사명</th><th class="c">참여</th><th>동의건수</th>
+        <th class="c">구간</th><th>인센티브</th></tr></thead><tbody>
+      ${rows.map((r,i)=>`<tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+r.id)}">
+        <td class="c">${r.agr>0?`<span class="rk ${i<3?'r'+(i+1):''}">${i+1}</span>`:'<span class="mute">-</span>'}</td>
+        <td class="l"><span class="pill c${CO.indexOf(r.center)+1}">${esc(r.center)}</span></td>
+        <td class="l mute">${esc(r.team)}</td><td class="l mute">${esc(r.id)}</td>
+        <td class="l"><b>${esc(r.name)}</b></td>
+        <td class="c">${r.join?'<span class="chip up">참여</span>':'<span class="chip">미참여</span>'}</td>
+        <td class="agr">${nf(r.agr)}</td>
+        <td class="c">${r.tier?`<span class="chip or">${esc(r.tier.name)}</span>`:'<span class="mute">-</span>'}</td>
+        <td>${r.inc?`<b>${won(r.inc)}</b>`:'<span class="mute">0원</span>'}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td></td><td class="l">합계</td><td></td><td></td>
+        <td class="l">${nf(S.roster.length)}명</td><td class="c">${nf(S.joined.length)}명</td>
+        <td class="agr">${nf(S.agr)}</td><td class="c">${nf(S.ach)}명</td>
+        <td>${won(S.inc)}</td></tr></tfoot></table>
+      </div>
+    </div>
+  </div>`;
+}
+
 /* ================================ 검색 / 라우팅 ================================ */
 function filterRows(inp){
   const q = inp.value.trim().toLowerCase();
@@ -1507,7 +1575,9 @@ function filterRows(inp){
 function go(v){
   document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.toggle('on', b.dataset.v===String(v)));
   try{
-    $('#view').innerHTML = v==='main' ? viewMain() : viewMonth(Number(v));
+    $('#view').innerHTML = v==='main' ? viewMain()
+                         : v==='sep'  ? viewSepMonth()
+                         : viewMonth(Number(v));
   }catch(err){
     /* 화면 전체를 JS 로 그리므로, 오류가 나면 백지 대신 원인을 보여준다 */
     $('#view').innerHTML = '<div class="nojs" style="margin-top:24px">'
@@ -1522,8 +1592,9 @@ function go(v){
   try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
 }
 function renderTabs(){
-  $('#tabs').innerHTML = `<button class="tab on first" data-v="main" onclick="go('main')">대시보드</button>` +
-    M.map(m=>`<button class="tab" data-v="${m.m}" onclick="go(${m.m})">${m.m}월</button>`).join('');
+  $('#tabs').innerHTML = `<button class="tab on first" data-v="main" onclick="go('main')">대시보드</button>`
+    + M.map(m=>`<button class="tab" data-v="${m.m}" onclick="go(${m.m})">${m.m}월</button>`).join('')
+    + `<button class="tab" data-v="sep" onclick="go('sep')">${SEP().m}월</button>`;
 }
 
 /* ================================ 메일 공유용 요약 ================================ */
