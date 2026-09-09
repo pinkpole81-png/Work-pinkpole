@@ -1112,12 +1112,21 @@ function barChart(items, opt={}){
     /* 기본은 각진 막대. opt.round 지정 시 둥글게 하되 막대 높이의 절반을 넘지 않게 해
        값이 작을 때 알약 모양으로 뭉개지는 것을 막는다 */
     const rx = opt.round ? Math.min(opt.round, bw/2, bh/2) : 0;
+    /* 집계 진행 중인 달은 연한 채움 + 점선 테두리로 완료된 달과 구분 */
     s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}"${rx?` rx="${rx.toFixed(1)}"`:''}
-         fill="${d.hi?'url(#bg2)':(opt.color||'url(#bg1)')}"/>`;
+         fill="${d.partial?'#FFEBD9':(d.hi?'url(#bg2)':(opt.color||'url(#bg1)'))}"
+         ${d.partial?'stroke="#F0A05A" stroke-width="1.5" stroke-dasharray="4 3"':''}/>`;
     if(d.v>0){
-      const ins = bh >= 34*F;
+      const ins = bh >= 34*F && !d.partial;
       s+=`<text x="${x(i)}" y="${ins?by+21*F:by-9*F}" text-anchor="middle" font-size="${13.5*F}"
-           font-weight="700" fill="${ins?'#FFFFFF':'#2E3648'}">${nf(d.v)}</text>`;
+           font-weight="700" fill="${ins?'#FFFFFF':(d.partial?'#BC4C08':'#2E3648')}">${nf(d.v)}</text>`;
+    }
+    if(d.partial && opt.badge){
+      /* 진행중 막대는 값 라벨이 막대 밖에 찍히므로 뱃지를 그 위로 올린다 */
+      const tw=52*F, ty=by-30*F;
+      s+=`<g><rect x="${x(i)-tw/2}" y="${ty-13*F}" width="${tw}" height="${17*F}" rx="${8.5*F}"
+           fill="#EDEFF5"/><text x="${x(i)}" y="${ty-0.5*F}" text-anchor="middle"
+           font-size="${10.5*F}" font-weight="700" fill="#464F69">집계중</text></g>`;
     }
     if(d.hi && opt.badge){
       const tw=40*F, ty=by-13*F;
@@ -1146,6 +1155,7 @@ function barChart(items, opt={}){
   }
   if(opt.click){                                   /* 막대 영역 클릭 → 해당 월 상세 */
     items.forEach((d,i)=>{
+      if(d.k==null) return;                        /* 상세가 없는 달(9월)은 클릭 대상 제외 */
       s+=`<rect class="hit" x="${PL+cw*i}" y="${PT-10}" width="${cw}" height="${ih+PB}" rx="6"
            onclick="${opt.click}(${d.k})"><title>${esc(d.l)} 엑셀 상세 보기</title></rect>`;
     });
@@ -1223,6 +1233,13 @@ function viewMain(){
   });
   const under = S.joined.filter(r=>r.agr < INC.tiers[0].min).length;
 
+  /* 월별 차트 : 1~8월(완료) + 9월(집계중). 9월은 실적이 들어온 뒤에만 표시 */
+  const chartMonths = M.map(m=>({k:m.m, l:m.m+'월', l2:'시도 '+nf(m.att), v:m.agr,
+    r:m.att?m.agr/m.att:0, hi:m.m===best.m}));
+  const sepInChart = wAgr>0 || wAtt>0;
+  if(sepInChart) chartMonths.push({k:null, l:SEP().m+'월', l2:'시도 '+nf(wAtt), v:wAgr,
+    r:wAtt?wAgr/wAtt:0, partial:true});
+
   return `
   ${sampleOn?`<div class="notice sample" style="margin-top:20px"><span>⚑</span><div>
     <b>샘플 데이터 (테스트용)</b> — 지금 보이는 9월 수치는 <b>실제 실적이 아닌 가상 데이터</b>입니다.
@@ -1282,20 +1299,25 @@ function viewMain(){
     <div class="card hero-chart">
       <div class="hero-top">
         <div class="hero-figs">
-          <div><span class="hf-l">누적 동의</span><b>${nf(tot.agr)}<i>건</i></b></div>
-          <div><span class="hf-l">누적 시도</span><b>${nf(tot.att)}<i>건</i></b></div>
+          <div><span class="hf-l">1~8월 누적 동의</span><b>${nf(tot.agr)}<i>건</i></b></div>
+          <div><span class="hf-l">1~8월 누적 시도</span><b>${nf(tot.att)}<i>건</i></b></div>
           <div><span class="hf-l">평균 동의율</span><b>${pct(tot.agr,tot.att)}</b></div>
         </div>
         <div class="legend">
           <span><i style="background:linear-gradient(180deg,#FFC08A,#FF9A4D)"></i>월 동의건수</span>
           <span><i style="background:linear-gradient(180deg,#FF8A33,#E85E10)"></i>최고 실적월</span>
+          <span><i style="background:#FFEBD9;border:1.5px dashed #F0A05A"></i>집계중</span>
           <span><i style="background:#7A85A3"></i>동의율</span>
         </div>
       </div>
-      ${barChart(M.map(m=>({k:m.m, l:m.m+'월', l2:'시도 '+nf(m.att), v:m.agr,
-        r:m.att?m.agr/m.att:0, hi:m.m===best.m})),
+      ${barChart(chartMonths,
         {line:true, fluid:true, bands:true, badge:true, w:1180, h:400, fs:1.18, bw:64,
          click:'go', aria:'월별 동의건수 및 동의율'})}
+      ${sepInChart ? `<div class="hint" style="margin:0 0 12px;padding-top:10px;
+        border-top:1px solid var(--line-2)">
+        9월은 <b>자율참여 전환</b> 이후 집계 중입니다 (${esc(BASE())} 기준 ·
+        시도 ${nf(wAtt)}건 / 동의 ${nf(wAgr)}건 / 동의율 ${pct(wAgr,wAtt)}).
+        1~8월은 목표 부여 방식이라 월 전체 실적이며, 직접 비교에는 주의가 필요합니다.</div>` : ''}
     </div>
   </div>
 
