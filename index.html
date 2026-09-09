@@ -258,8 +258,6 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
     <h1>마케팅 활용동의 획득 실적 대시보드</h1>
     <div class="topbar-right">
       <div class="basis">데이터 기준일 <b id="basisDate">-</b></div>
-      <button class="btn" id="btnSample">샘플</button>
-      <button class="btn" id="btnCopy">메일 요약 복사</button>
       <button class="btn primary" onclick="window.print()">인쇄 / PDF</button>
     </div>
   </div>
@@ -1155,9 +1153,11 @@ function barChart(items, opt={}){
   }
   if(opt.click){                                   /* 막대 영역 클릭 → 해당 월 상세 */
     items.forEach((d,i)=>{
-      if(d.k==null) return;                        /* 상세가 없는 달(9월)은 클릭 대상 제외 */
+      if(d.k==null || d.k===undefined) return;
+      /* 월 탭은 숫자, 9월은 'sep' 문자열이라 인자를 형태에 맞게 감싼다 */
+      const arg = typeof d.k === 'number' ? d.k : `'${d.k}'`;
       s+=`<rect class="hit" x="${PL+cw*i}" y="${PT-10}" width="${cw}" height="${ih+PB}" rx="6"
-           onclick="${opt.click}(${d.k})"><title>${esc(d.l)} 엑셀 상세 보기</title></rect>`;
+           onclick="${opt.click}(${arg})"><title>${esc(d.l)} 상세 보기</title></rect>`;
     });
   }
   return s+'</svg>';
@@ -1237,7 +1237,7 @@ function viewMain(){
   const chartMonths = M.map(m=>({k:m.m, l:m.m+'월', l2:'시도 '+nf(m.att), v:m.agr,
     r:m.att?m.agr/m.att:0, hi:m.m===best.m}));
   const sepInChart = wAgr>0 || wAtt>0;
-  if(sepInChart) chartMonths.push({k:null, l:SEP().m+'월', l2:'시도 '+nf(wAtt), v:wAgr,
+  if(sepInChart) chartMonths.push({k:'sep', l:SEP().m+'월', l2:'시도 '+nf(wAtt), v:wAgr,
     r:wAtt?wAgr/wAtt:0, partial:true});
 
   return `
@@ -1597,65 +1597,13 @@ function renderTabs(){
     + `<button class="tab" data-v="sep" onclick="go('sep')">${SEP().m}월</button>`;
 }
 
-/* ================================ 메일 공유용 요약 ================================ */
-function mailSummary(){
-  const tot = M.reduce((a,m)=>({att:a.att+m.att, agr:a.agr+m.agr}),{att:0,agr:0});
-  const S = sepData();
-  const L = [];
-  L.push(`[한화손해보험] 마케팅 활용동의 획득 실적 (기준일 ${BASE()})` + (sampleOn ? '  ※ 샘플 데이터' : ''));
-  L.push('');
-  L.push(`■ 전체 동의 누적 : ${nf(tot.agr)}건 (시도 ${nf(tot.att)}건 / 동의율 ${pct(tot.agr,tot.att)})`);
-  L.push('■ 월별 실적 (시도 / 동의 / 동의율)');
-  M.forEach(m=> L.push(`  · ${m.m}월 : ${nf(m.att)} / ${nf(m.agr)} / ${pct(m.agr,m.att)}`));
-  L.push('');
-  L.push(`■ 9월 자율참여 : 참여 ${nf(S.joined.length)}명 / 동의 ${nf(S.agr)}건 / 인센티브 ${won(S.inc)}`);
-  if(S.weeks.length){
-    L.push('  [주간 실적]');
-    S.weeks.forEach(w=> L.push(`  · ${w.label}(${w.range||''}) : 시도 ${nf(w.att||0)} / 동의 ${nf(w.agr||0)}`));
-  }
-  if(S.centers.length){
-    L.push('  [센터별]');
-    S.centers.forEach(c=> L.push(`  · ${c.c} : ${nf(c.n)}명 / 동의 ${nf(c.agr)}건 / 인센티브 ${won(c.inc)} / 1인 평균 ${won(c.avg)}`));
-  }
-  const top = S.roster.filter(r=>r.agr>0).sort((a,b)=>b.agr-a.agr).slice(0,5);
-  if(top.length){
-    L.push('  [상담원 TOP5]');
-    top.forEach((r,i)=> L.push(`  ${i+1}. ${r.name}(${r.center}) ${nf(r.agr)}건 · ${won(r.inc)}`));
-  }
-  L.push('');
-  L.push(`※ 인센티브 : ${INC.tiers.map(t=>`${t.min}건 이상 전건 ${nf(t.rate)}원`).join(' / ')} · 월 상한 ${nf(INC.cap)}원`);
-  return L.join('\n');
-}
-$('#btnCopy').onclick = function(){
-  const txt = mailSummary(), b = this;
-  const done = ok => { b.textContent = ok?'✓ 복사 완료':'복사 실패'; setTimeout(()=>b.textContent='메일 요약 복사',1800); };
-  const fallback = () => {
-    const ta = document.createElement('textarea');
-    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    let ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
-    document.body.removeChild(ta); done(ok);
-  };
-  if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(()=>done(true), fallback);
-  else fallback();
-};
-
-/* ================================ 샘플 모드 전환 ================================ */
+/* ================================ 헤더 · 하단 표기 ================================ */
 function paintChrome(){
   $('#basisDate').textContent = BASE();
-  $('#btnSample').classList.toggle('on', sampleOn);
-  $('#btnSample').textContent = sampleOn ? '샘플 ON' : '샘플';
-  $('#btnSample').title = sampleOn ? '실제 데이터 화면으로 전환' : '테스트용 샘플 데이터로 전환';
-  $('#footL').innerHTML = `데이터 기준일 <b style="color:#6B7887">${esc(BASE())}</b>` +
+  $('#footL').innerHTML = `데이터 기준일 <b style="color:#464F69">${esc(BASE())}</b>` +
     (sampleOn ? ' <span style="color:#B08214;font-weight:700">· 샘플 데이터</span>' : '') +
     ` · 최종 갱신 ${esc(DATA.meta.updatedAt)} · 작성 ${esc(DATA.meta.owner)}`;
 }
-$('#btnSample').onclick = () => {
-  sampleOn = !sampleOn;
-  paintChrome();
-  var onTab = document.querySelector('#tabs .tab.on');
-  go(onTab && onTab.dataset.v ? onTab.dataset.v : 'main');
-};
 
 /* ================================ 초기화 ================================ */
 try{

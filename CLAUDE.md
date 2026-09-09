@@ -15,7 +15,8 @@ https://claude.ai/code/artifact/f370a6d6-30cf-42d0-9964-b50458ad0869
 같은 주소를 유지하려면 Artifact 툴에 이 URL을 `url` 인자로 넘겨 재게시한다.
 `url` 없이 게시하면 **별도의 새 아티팩트**가 만들어지므로 주의.
 게시 전 `<!DOCTYPE>` / `<html>` / `<head>` / `<body>` 태그를 제거한 사본을 만들어 올린다
-(래퍼가 제공함). 게시본에는 `color-scheme: light`와 상단 "보기 전용 공유본" 안내가 추가돼 있다.
+(래퍼가 제공함). 게시본과 로컬 파일의 차이는 나눔고딕 웹폰트 링크 하나뿐이다
+(빌드 스크립트: 스크래치패드의 `build_artifact.py`).
 
 ## 주간 갱신 절차
 
@@ -30,6 +31,9 @@ https://claude.ai/code/artifact/f370a6d6-30cf-42d0-9964-b50458ad0869
 3. **검증** — 아래 "검증 기준" 항목을 반드시 확인
 4. 커밋 → `claude/insurance-consent-dashboard-72sfr7` 브랜치에 푸시
 5. 같은 URL로 아티팩트 재게시 + `SendUserFile`로 `index.html` 전달
+
+헤더 버튼은 [인쇄 / PDF] 하나뿐이다. 샘플 전환·메일 요약 복사 버튼은
+사용자 요청으로 제거됐으므로 되살리지 말 것. 샘플은 `sampleMode` 값으로만 전환한다.
 
 인센티브 금액·구간별 인원·센터별 합계·1인 평균·랭킹은 **입력하지 않는다.**
 동의건수만 넣으면 `calcInc()`가 전부 파생 계산한다.
