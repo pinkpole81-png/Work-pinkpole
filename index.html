@@ -1224,6 +1224,10 @@ function viewMain(){
   const S = sepData();
   const wAtt = S.weeks.reduce((a,w)=>a+(w.att||0),0), wAgr = S.weeks.reduce((a,w)=>a+(w.agr||0),0);
   const empty = S.agr===0 && wAgr===0;
+  /* 9월 실적이 들어오면 누계에 포함 (9월은 집계 중이므로 차트·안내에 그 사실을 표기) */
+  const hasSep = !empty;
+  const all = {att: tot.att + (hasSep?wAtt:0), agr: tot.agr + (hasSep?wAgr:0)};
+  const span = hasSep ? `1~${SEP().m}월` : '1~'+M[M.length-1].m+'월';
 
   /* 구간별 인원 / 금액 */
   const tiers = INC.tiers.map((t,i)=>{
@@ -1252,7 +1256,7 @@ function viewMain(){
 
   <!-- ① 전체 동의 누적건수 -->
   <div class="sec">
-    <div class="sec-hd"><h2>전체 누적 실적</h2><span class="desc">2026년 1월 ~ 8월</span>
+    <div class="sec-hd"><h2>전체 누적 실적</h2><span class="desc">2026년 1월 ~ ${hasSep?SEP().m:M[M.length-1].m}월${hasSep?' (9월 집계중)':''}</span>
       <span class="right">데이터 기준일 ${esc(BASE())}</span></div>
     <div class="grid" style="grid-template-columns:minmax(0,320px) minmax(0,1fr)">
       <div class="card tile-bar card-pad">
@@ -1282,9 +1286,9 @@ function viewMain(){
         </div>`}
       </div>
       <div class="grid g-2" style="align-content:stretch">
-        ${kpi('전체 동의 누적건수', nf(tot.agr), '건', `<span class="chip or">최고 ${best.m}월 ${nf(best.agr)}건</span>`, 'acc')}
-        ${kpi('전체 시도 누적건수', nf(tot.att), '건', `월 평균 ${nf(tot.att/M.length)}건`, '')}
-        ${kpi('평균 동의율', pct(tot.agr,tot.att), '', '동의건수 ÷ 시도건수', '')}
+        ${kpi('전체 동의 누적건수', nf(all.agr), '건', `<span class="chip or">최고 ${best.m}월 ${nf(best.agr)}건</span>`, 'acc')}
+        ${kpi('전체 시도 누적건수', nf(all.att), '건', `1~${M[M.length-1].m}월 월 평균 ${nf(tot.att/M.length)}건`, '')}
+        ${kpi('평균 동의율', pct(all.agr,all.att), '', '동의건수 ÷ 시도건수', '')}
         ${empty ? kpi('9월 동의 (자율참여)', '—', '', '<span class="chip">데이터 입력 대기</span>', '')
           : kpi('9월 동의 (자율참여)', nf(S.agr), '건',
               `인센티브 <b style="color:var(--hw-deep)">${won(S.inc)}</b>`, 'acc')}
@@ -1299,9 +1303,9 @@ function viewMain(){
     <div class="card hero-chart">
       <div class="hero-top">
         <div class="hero-figs">
-          <div><span class="hf-l">1~8월 누적 동의</span><b>${nf(tot.agr)}<i>건</i></b></div>
-          <div><span class="hf-l">1~8월 누적 시도</span><b>${nf(tot.att)}<i>건</i></b></div>
-          <div><span class="hf-l">평균 동의율</span><b>${pct(tot.agr,tot.att)}</b></div>
+          <div><span class="hf-l">${span} 누적 동의</span><b>${nf(all.agr)}<i>건</i></b></div>
+          <div><span class="hf-l">${span} 누적 시도</span><b>${nf(all.att)}<i>건</i></b></div>
+          <div><span class="hf-l">평균 동의율</span><b>${pct(all.agr,all.att)}</b></div>
         </div>
         <div class="legend">
           <span><i style="background:linear-gradient(180deg,#FFC08A,#FF9A4D)"></i>월 동의건수</span>
