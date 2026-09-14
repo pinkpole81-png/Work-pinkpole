@@ -53,16 +53,6 @@ body{background:var(--page);color:var(--ink);font-size:15px;line-height:1.55;
 .basis{background:var(--ground);border:1px solid var(--line);border-radius:9px;padding:8px 14px;
   font-size:12.5px;color:var(--slate);white-space:nowrap}
 .basis b{color:var(--ink);font-weight:700}
-.btn{background:var(--card);border:1px solid var(--line);color:var(--ink-2);border-radius:9px;
-  padding:7px 13px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
-  transition:background .15s,border-color .15s}
-.btn:hover{background:var(--ground);border-color:#DDE1EC}
-.btn:focus-visible{outline:2px solid var(--hw);outline-offset:2px}
-.btn.primary{background:linear-gradient(145deg,var(--hw-lite),var(--hw));border-color:transparent;
-  color:#fff;box-shadow:0 6px 14px -6px rgba(243,115,33,.7)}
-.btn.primary:hover{filter:brightness(.96)}
-.btn.on{background:var(--hw-wash);border-color:var(--hw-pale);color:var(--hw-deep)}
-
 /* ---------- Tabs ---------- */
 .tabbar{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
 .tabbar-in{max-width:1320px;margin:0 auto;padding:9px 26px;display:flex;gap:4px;overflow-x:auto}
@@ -245,7 +235,7 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
   table{font-size:13px}th,td{padding:10px 10px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-@media print{body{background:#fff}.tabbar,.btn,.toolbar{display:none!important}
+@media print{body{background:#fff}.tabbar,.toolbar{display:none!important}
   .card{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
   .kpi{break-inside:avoid}
   .hero-chart{background:#fff}
@@ -263,7 +253,6 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
     <h1>마케팅 활용동의 획득 실적 대시보드</h1>
     <div class="topbar-right">
       <div class="basis">데이터 기준일 <b id="basisDate">-</b></div>
-      <button class="btn primary" onclick="window.print()">인쇄 / PDF</button>
     </div>
   </div>
 </header>
