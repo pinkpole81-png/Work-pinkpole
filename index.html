@@ -223,6 +223,8 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
 .tier .tv{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
 .tier .tv small{font-size:11px;color:var(--slate-l);font-weight:600;margin-left:3px}
 .hint{font-size:12.5px;color:var(--slate-l);margin-top:10px;line-height:1.65}
+.hpoint{margin-top:12px;padding-top:11px;border-top:1px solid var(--line-2);
+  font-size:13px;font-weight:700;color:var(--hw-deep)}
 
 @media (max-width:1100px){.g-4{grid-template-columns:repeat(2,1fr)}.g-32,.g-3{grid-template-columns:1fr}}
 @media (max-width:720px){
@@ -311,6 +313,7 @@ const DATA = {
   /* 인센티브 기준 (9월 자율참여부터 적용) — 구간 도달 시 전 건수에 해당 단가 적용 */
   incentive: {
     cap: 150000,                                  // 1인 월 상한
+    hpoint: 1000,                                 // 전 구간 대상자 H-Point 지급 점수
     tiers: [
       { name:"1구간", min:20,  rate:500  },        // 20건 이상  → 전건 500원
       { name:"2구간", min:50,  rate:700  },        // 50건 이상  → 전건 700원
@@ -1824,6 +1827,7 @@ function viewMain(){
         <div class="stat-row"><span class="k">적용 기간</span><span class="v">9월 ~</span></div>
         <div class="hint">예시 · 53건 획득 → 2구간 도달 → 53건 × 700원 = ${won(53*700)}<br>
         예시 · 286건 획득 → 3구간 도달 → 286,000원이나 상한 적용으로 ${won(INC.cap)}</div>
+        <div class="hpoint">※ 전 구간 대상자 H-Point ${nf(INC.hpoint||1000)}점 지급</div>
       </div>
     </div>
   </div>
