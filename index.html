@@ -105,8 +105,6 @@ body{background:var(--page);color:var(--ink);font-size:15px;line-height:1.55;
 .kpi-v .u{font-size:16px;font-weight:700;color:var(--slate);margin-left:4px;letter-spacing:0}
 .kpi-s{font-size:12.5px;color:var(--slate-l);margin-top:11px}
 .kpi.acc{border-top-color:var(--hw)}
-/* 숫자 대신 문구가 들어가는 타일 — 38px 로는 줄바꿈이 생겨 크기를 낮춘다 */
-.kpi.txt .kpi-v{font-size:21px;letter-spacing:-.4px;line-height:1.4}
 .kpi.acc .kpi-v{color:var(--hw-deep)}
 .chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;
   background:var(--line-2);color:var(--ink-2)}
@@ -1563,6 +1561,41 @@ function ring(value, total, color, opt={}){
   </svg>`;
 }
 
+/* 미니 꺾은선 — 주차별 추이처럼 점이 몇 개 안 되는 값을 작게 보여줄 때 */
+function miniLine(items, opt={}){
+  /* viewBox 를 실제 렌더 폭에 가깝게 잡고 max-width 로 상한을 둬,
+     타일이 넓어져도 글자가 과하게 확대되지 않도록 한다 */
+  const W=opt.w||560, H=opt.h||150, PL=26, PR=26, PT=36, PB=30;
+  const iw=W-PL-PR, ih=H-PT-PB;
+  const max=Math.max(1,...items.map(d=>d.v));
+  const n=items.length;
+  const x=i=> n===1 ? PL+iw/2 : PL + iw/(n-1)*i;
+  const y=v=> PT + ih - (v/max)*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img"
+    style="width:100%;max-width:${W}px;height:auto;margin:0 auto"
+    aria-label="${esc(opt.aria||'주차별 추이')}">
+    <defs><linearGradient id="mlA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F37321" stop-opacity=".20"/>
+      <stop offset="100%" stop-color="#F37321" stop-opacity="0"/></linearGradient></defs>`;
+  s+=`<line x1="${PL-6}" x2="${W-PR+6}" y1="${PT+ih}" y2="${PT+ih}" stroke="#E2E6EE"/>`;
+  if(n>1){
+    const pts=items.map((d,i)=>`${x(i).toFixed(1)},${y(d.v).toFixed(1)}`).join(' ');
+    s+=`<path d="M${x(0).toFixed(1)},${PT+ih} L${pts.split(' ').join(' L')} L${x(n-1).toFixed(1)},${PT+ih} Z"
+         fill="url(#mlA)"/>`;
+    s+=`<polyline points="${pts}" fill="none" stroke="#F37321" stroke-width="2.5"
+         stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  items.forEach((d,i)=>{
+    s+=`<circle cx="${x(i).toFixed(1)}" cy="${y(d.v).toFixed(1)}" r="4.5" fill="#fff"
+         stroke="#F37321" stroke-width="2.5"/>`;
+    s+=`<text x="${x(i).toFixed(1)}" y="${(y(d.v)-13).toFixed(1)}" text-anchor="middle"
+         font-size="14" font-weight="700" fill="#BC4C08">${nf(d.v)}</text>`;
+    s+=`<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="11.5"
+         fill="#626C89">${esc(d.l)}</text>`;
+  });
+  return s+'</svg>';
+}
+
 function hBars(items){
   const max=Math.max(1,...items.map(d=>d.v));
   return `<div style="display:flex;flex-direction:column;gap:11px">`+items.map(d=>`
@@ -1953,14 +1986,16 @@ function viewSepList(){
     동의 리스트가 아직 입력되지 않았습니다.</div></div></div>`;
 
   const byWk = [...new Set(L.map(r=>r.wk))].map(w=>({k:w, n:L.filter(r=>r.wk===w).length}));
-  const byCh = [...new Set(L.map(r=>r.ch))].map(c=>({k:c, n:L.filter(r=>r.ch===c).length}))
-                 .sort((a,b)=>b.n-a.n);
 
   return head + `
-    <div class="grid g-3">
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)">
       ${kpi('총 동의 건수', nf(L.length), '건', `상담사 ${nf(new Set(L.map(r=>r.name)).size)}명`, 'acc')}
-      ${kpi('주차별 건수', byWk.map(w=>`${esc(w.k)} <b>${nf(w.n)}</b>`).join(' · '), '', '', 'txt')}
-      ${kpi('부문별 건수', byCh.map(c=>`${esc(c.k)} <b>${nf(c.n)}</b>`).join(' · '), '', '', 'txt')}
+      <div class="kpi">
+        <div class="kpi-l">주차별 동의건수</div>
+        <div style="margin-top:6px">
+          ${miniLine(byWk.map(w=>({l:w.k, v:w.n})), {aria:'주차별 동의건수 추이'})}
+        </div>
+      </div>
     </div>
   </div>
 
