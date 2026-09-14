@@ -1650,7 +1650,7 @@ function viewMain(){
             <div><div class="kpi-l">참여 인원</div>
               <div style="font-size:22px;font-weight:700;letter-spacing:-.8px;margin-top:3px">
                 ${nf(S.joined.length)}<span style="font-size:13px;color:var(--slate-l)"> / ${nf(S.roster.length)}명</span></div></div>
-            <div><div class="kpi-l">인센티브 달성</div>
+            <div><div class="kpi-l">인센티브 현황</div>
               <div style="font-size:22px;font-weight:700;letter-spacing:-.8px;margin-top:3px;color:var(--hw-deep)">
                 ${nf(S.ach)}<span style="font-size:13px;color:var(--slate-l)">명</span></div></div>
           </div>
@@ -1700,11 +1700,11 @@ function viewMain(){
   <div class="sec">
     <div class="sec-hd"><h2>주간 실적</h2><span class="desc">9월 자율참여 · 주차별</span>
       <span class="right">누계 동의 ${nf(wAgr)}건</span></div>
-    <div class="grid g-32">
+    <div class="grid g-2">
       <div class="card card-pad">
         ${S.weeks.length ? barChart(S.weeks.map((w,i)=>({l:w.label, l2:w.range, v:w.agr||0,
             r:w.att?(w.agr||0)/w.att:0, hi:i===S.weeks.length-1})),
-            {line:true, fluid:true, w:720, h:300, fs:1.05, round:10, aria:'주간 동의건수'})
+            {line:true, fluid:true, w:560, h:240, fs:1.05, round:10, aria:'주간 동의건수'})
           : '<div class="emptybox">주간 데이터가 없습니다.</div>'}
       </div>
       <div class="card"><div class="tbl-scroll">
@@ -1734,7 +1734,7 @@ function viewMain(){
           ${INC.tiers.map((t,i)=>`<div class="tier t${i+1}"><span class="tn">${esc(t.name)}</span>
             <span class="tl">${nf(tiers[i].people)}명 · 참여자의 ${pct(tiers[i].people, S.joined.length, 0)}</span>
             <span class="tv">${nf(tiers[i].amount)}<small>원</small></span></div>`).join('')}
-          <div class="tier t0"><span class="tn">미달성</span>
+          <div class="tier t0"><span class="tn">미달</span>
             <span class="tl">${nf(INC.tiers[0].min)}건 미만 · ${nf(under)}명</span>
             <span class="tv">0<small>원</small></span></div>
         </div>
