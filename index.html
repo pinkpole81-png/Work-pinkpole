@@ -1561,37 +1561,31 @@ function ring(value, total, color, opt={}){
   </svg>`;
 }
 
-/* 미니 꺾은선 — 주차별 추이처럼 점이 몇 개 안 되는 값을 작게 보여줄 때 */
-function miniLine(items, opt={}){
-  /* viewBox 를 실제 렌더 폭에 가깝게 잡고 max-width 로 상한을 둬,
-     타일이 넓어져도 글자가 과하게 확대되지 않도록 한다 */
+/* 미니 막대 — 주차별처럼 항목이 몇 개 안 되는 값을 작게 보여줄 때.
+   viewBox 를 실제 렌더 폭에 맞추고 max-width 로 상한을 둬 글자가 과하게 커지지 않게 한다 */
+function miniBar(items, opt={}){
   const W=opt.w||560, H=opt.h||150, PL=26, PR=26, PT=36, PB=30;
   const iw=W-PL-PR, ih=H-PT-PB;
   const max=Math.max(1,...items.map(d=>d.v));
-  const n=items.length;
-  const x=i=> n===1 ? PL+iw/2 : PL + iw/(n-1)*i;
-  const y=v=> PT + ih - (v/max)*ih;
+  const n=items.length, cw=iw/n;
+  const bw=Math.min(64, cw*0.5);
+  const x=i=>PL+cw*(i+0.5);
+  const y=v=>PT+ih-(v/max)*ih;
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img"
     style="width:100%;max-width:${W}px;height:auto;margin:0 auto"
-    aria-label="${esc(opt.aria||'주차별 추이')}">
-    <defs><linearGradient id="mlA" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#F37321" stop-opacity=".20"/>
-      <stop offset="100%" stop-color="#F37321" stop-opacity="0"/></linearGradient></defs>`;
-  s+=`<line x1="${PL-6}" x2="${W-PR+6}" y1="${PT+ih}" y2="${PT+ih}" stroke="#E2E6EE"/>`;
-  if(n>1){
-    const pts=items.map((d,i)=>`${x(i).toFixed(1)},${y(d.v).toFixed(1)}`).join(' ');
-    s+=`<path d="M${x(0).toFixed(1)},${PT+ih} L${pts.split(' ').join(' L')} L${x(n-1).toFixed(1)},${PT+ih} Z"
-         fill="url(#mlA)"/>`;
-    s+=`<polyline points="${pts}" fill="none" stroke="#F37321" stroke-width="2.5"
-         stroke-linejoin="round" stroke-linecap="round"/>`;
-  }
+    aria-label="${esc(opt.aria||'주차별 건수')}">
+    <defs><linearGradient id="mbG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFB578"/><stop offset="100%" stop-color="#F37321"/>
+    </linearGradient></defs>`;
+  s+=`<line x1="${PL-6}" x2="${W-PR+6}" y1="${PT+ih}" y2="${PT+ih}" stroke="#C9CFDD" stroke-width="1.5"/>`;
   items.forEach((d,i)=>{
-    s+=`<circle cx="${x(i).toFixed(1)}" cy="${y(d.v).toFixed(1)}" r="4.5" fill="#fff"
-         stroke="#F37321" stroke-width="2.5"/>`;
-    s+=`<text x="${x(i).toFixed(1)}" y="${(y(d.v)-13).toFixed(1)}" text-anchor="middle"
-         font-size="14" font-weight="700" fill="#BC4C08">${nf(d.v)}</text>`;
-    s+=`<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="11.5"
-         fill="#626C89">${esc(d.l)}</text>`;
+    const bx=x(i)-bw/2, by=y(d.v), bh=Math.max(2,PT+ih-by);
+    s+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}"
+         height="${bh.toFixed(1)}" fill="url(#mbG)"/>`;
+    s+=`<text x="${x(i).toFixed(1)}" y="${(by-11).toFixed(1)}" text-anchor="middle"
+         font-size="15" font-weight="700" fill="#BC4C08">${nf(d.v)}</text>`;
+    s+=`<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="12"
+         fill="#464F69" font-weight="600">${esc(d.l)}</text>`;
   });
   return s+'</svg>';
 }
@@ -1993,7 +1987,7 @@ function viewSepList(){
       <div class="kpi">
         <div class="kpi-l">주차별 동의건수</div>
         <div style="margin-top:6px">
-          ${miniLine(byWk.map(w=>({l:w.k, v:w.n})), {aria:'주차별 동의건수 추이'})}
+          ${miniBar(byWk.map(w=>({l:w.k, v:w.n})), {aria:'주차별 동의건수'})}
         </div>
       </div>
     </div>
