@@ -296,7 +296,7 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
      ① meta.baseDate  : 데이터 기준일을 최신으로 변경
      ② sep.weeks      : 이번 주 한 줄 추가   { label:"2주차", range:"9/08~9/12", att:1200, agr:180 },
      ③ sep.roster     : 상담사별 "동의건수"(맨 뒤 숫자)만 갱신
-   ※ 인센티브 금액 · 센터별 실적 · 랭킹은 입력하지 않습니다. 전부 자동 계산됩니다.
+   ※ 인센티브 금액 · 구간별 인원은 입력하지 않습니다. 전부 자동 계산됩니다.
    ================================================================================ */
 const DATA = {
 
@@ -1596,17 +1596,6 @@ function miniBar(items, opt={}){
   return s+'</svg>';
 }
 
-function hBars(items){
-  const max=Math.max(1,...items.map(d=>d.v));
-  return `<div style="display:flex;flex-direction:column;gap:11px">`+items.map(d=>`
-    <div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px">
-      <span style="font-weight:600;color:#2E3648">${esc(d.l)}${d.sub?` <span class="mute" style="font-weight:400">${esc(d.sub)}</span>`:''}</span>
-      <span style="font-variant-numeric:tabular-nums"><b>${d.fmt||nf(d.v)}</b>${d.r?` <span class="mute">· ${esc(d.r)}</span>`:''}</span>
-    </div>
-    <div style="height:11px;background:#EDEFF5;overflow:hidden">
-      <div style="height:100%;width:${(d.v/max*100).toFixed(1)}%;background:${d.c||'#F37321'}"></div>
-    </div></div>`).join('')+'</div>';
-}
 const kpi=(l,v,u,s,c)=>`<div class="kpi ${c||''}"><div class="kpi-l">${l}</div>
   <div class="kpi-v">${v}${u?`<span class="u">${u}</span>`:''}</div><div class="kpi-s">${s||''}</div></div>`;
 
@@ -1644,7 +1633,7 @@ function viewMain(){
     파일 상단 <code>sampleMode: false</code> 로 바꾸면 영구히 해제됩니다.</div></div>`
    : empty?`<div class="notice" style="margin-top:20px"><span>✎</span><div>
     <b>9월 실적 입력 대기</b> — 파일 상단 <b>DATA</b> 영역의 <code>sep.weeks</code>(주간 실적)와
-    <code>sep.roster</code>(상담사별 동의건수)를 입력하시면 아래 주간 실적 · 센터별 실적 · 랭킹 · 인센티브가
+    <code>sep.roster</code>(상담사별 동의건수)를 입력하시면 아래 주간 실적 · 인센티브가
     모두 자동 계산됩니다. 현재 참여자 명단 ${nf(S.roster.length)}명이 등록되어 있습니다.</div></div>`:''}
 
   <!-- ① 전체 동의 누적건수 -->
@@ -1739,70 +1728,12 @@ function viewMain(){
     </div>
   </div>
 
-  <!-- ④ 9월 센터별 실적 -->
-  <div class="sec">
-    <div class="sec-hd"><h2>9월 센터별 실적</h2><span class="desc">자율참여 · 동의건수 및 인센티브</span>
-      <span class="right">참여 ${nf(S.joined.length)}명 / 명단 ${nf(S.roster.length)}명</span></div>
-    <div class="grid g-32">
-      <div class="card">${empty?`<div class="emptybox">9월 참여자 확정 및 실적 입력 후 표시됩니다.</div>`:`<div class="tbl-scroll">
-        <table><thead><tr><th class="l">센터</th><th>참여인원</th><th>동의건수</th><th>1인 평균 동의</th>
-          <th>달성인원</th><th>인센티브</th><th>1인 평균 금액</th></tr></thead><tbody>
-        ${S.centers.length ? S.centers.map(c=>`<tr>
-          <td class="l"><span class="pill c${CO.indexOf(c.c)+1}">${esc(c.c)}</span></td>
-          <td>${nf(c.n)}</td><td class="agr">${nf(c.agr)}</td><td class="mute">${(c.agr/(c.n||1)).toFixed(1)}건</td>
-          <td class="mute">${nf(c.ach)}</td><td><b>${won(c.inc)}</b></td><td class="mute">${won(c.avg)}</td></tr>`).join('')
-          : '<tr><td colspan="7" class="emptybox">참여자가 없습니다.</td></tr>'}
-        </tbody><tfoot><tr><td class="l">합계</td><td>${nf(S.joined.length)}</td><td class="agr">${nf(S.agr)}</td>
-          <td>${(S.agr/(S.joined.length||1)).toFixed(1)}건</td><td>${nf(S.ach)}</td><td>${won(S.inc)}</td>
-          <td>${won(S.inc/(S.joined.length||1))}</td></tr></tfoot></table>
-      </div>`}</div>
-      <div class="card card-pad">
-        <div class="ctitle">센터별 동의건수</div>
-        ${S.centers.length ? hBars(S.centers.map(c=>({l:c.c+'센터', sub:`${c.n}명`, v:c.agr,
-            r:'인센티브 '+won(c.inc), c: c.c==='청주'?'#F37321': c.c==='서울'?'#FF9F5A':'#FFC79A'})))
-          : '<div class="emptybox">참여자가 없습니다.</div>'}
-        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line-2)">
-          <div class="stat-row"><span class="k">인센티브 총액</span><span class="v">${won(S.inc)}</span></div>
-          <div class="stat-row"><span class="k">참여자 1인 평균 금액</span><span class="v">${won(S.inc/(S.joined.length||1))}</span></div>
-          <div class="stat-row"><span class="k">달성자 1인 평균 금액</span><span class="v">${won(S.inc/(S.ach||1))}</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ⑤ 상담원 Ranking -->
-  <div class="sec">
-    <div class="sec-hd"><h2>상담원 Ranking</h2><span class="desc">9월 동의건수 기준 · 인센티브 포함</span>
-      <span class="right">${nf(S.joined.length)}명 참여</span></div>
-    <div class="card">
-      <div class="card-pad" style="padding-bottom:0"><div class="toolbar">
-        <input class="inp" id="q1" placeholder="상담사명 · 사번 · 센터 · 팀 검색" oninput="filterRows(this)">
-        <span class="mute" id="q1_c" style="font-size:12px"></span></div></div>
-      <div class="tbl-scroll">
-      <table><thead><tr><th class="c" style="width:44px">순위</th><th class="l">상담사</th><th class="l">센터</th>
-        <th class="l">팀</th><th class="c">참여</th><th>동의건수</th><th class="c">구간</th><th>인센티브</th></tr></thead><tbody>
-      ${S.roster.slice().sort((a,b)=>b.agr-a.agr).map((r,i)=>`
-        <tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+r.id)}">
-          <td class="c"><span class="rk ${i<3&&r.agr>0?'r'+(i+1):''}">${i+1}</span></td>
-          <td class="l"><b>${esc(r.name)}</b> <span class="mute" style="font-size:12px">${esc(r.id)}</span></td>
-          <td class="l"><span class="pill c${CO.indexOf(r.center)+1}">${esc(r.center)}</span></td>
-          <td class="l mute">${esc(r.team)}</td>
-          <td class="c">${r.join?'<span class="chip up">참여</span>':'<span class="chip">미참여</span>'}</td>
-          <td class="agr">${nf(r.agr)}</td>
-          <td class="c">${r.tier?`<span class="chip or">${esc(r.tier.name)}</span>`:'<span class="mute">-</span>'}</td>
-          <td>${r.inc?`<b>${won(r.inc)}</b>`:'<span class="mute">0원</span>'}</td></tr>`).join('')}
-      </tbody><tfoot><tr><td></td><td class="l">합계</td><td></td><td></td><td class="c">${nf(S.joined.length)}명</td>
-        <td class="agr">${nf(S.agr)}</td><td class="c">${nf(S.ach)}명</td><td>${won(S.inc)}</td></tr></tfoot></table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ⑦ 인센티브 기준 -->
+  <!-- ④ 인센티브 기준 -->
   <div class="sec">
     <div class="sec-hd"><h2>인센티브 기준</h2><span class="desc">9월 자율참여부터 적용</span></div>
     <div class="grid g-2" style="align-items:start">
       <div class="card card-pad">
-        <div class="ctitle">구간별 달성 인원</div>
+        <div class="ctitle">구간별 인원 현황</div>
         <div class="ring-row">
           ${INC.tiers.map((t,i)=>`<div class="ring">
             ${ring(tiers[i].people, S.joined.length||1, ['#FFC79A','#FF9F5A','#F37321'][i],
@@ -1871,7 +1802,7 @@ function viewMonth(mm){
         <input class="inp" id="q2" placeholder="상담사명 · 사번 · 센터 · 팀 검색" oninput="filterRows(this)">
         <span class="mute" id="q2_c" style="font-size:12px"></span></div></div>
       <div class="tbl-scroll">
-      <table><thead><tr><th class="c" style="width:44px">순위</th><th class="l">센터</th><th class="l">팀</th>
+      <table><thead><tr><th class="c" style="width:44px">구분</th><th class="l">센터</th><th class="l">팀</th>
         <th class="l">사번</th><th class="l">상담사명</th><th>시도건수</th><th>동의건수</th><th>동의율</th></tr></thead><tbody>
       ${rows.map((r,i)=>`<tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+r.id)}">
         <td class="c"><span class="rk ${i<3?'r'+(i+1):''}">${i+1}</span></td>
@@ -1943,7 +1874,7 @@ function viewSepMonth(){
         <input class="inp" id="q3" placeholder="상담사명 · 사번 · 센터 · 팀 검색" oninput="filterRows(this)">
         <span class="mute" id="q3_c" style="font-size:12.5px"></span></div></div>
       <div class="tbl-scroll">
-      <table><thead><tr><th class="c" style="width:46px">순위</th><th class="l">센터</th><th class="l">팀</th>
+      <table><thead><tr><th class="c" style="width:46px">구분</th><th class="l">센터</th><th class="l">팀</th>
         <th class="l">사번</th><th class="l">상담사명</th><th class="c">참여</th><th>동의건수</th>
         <th class="c">구간</th><th>인센티브</th></tr></thead><tbody>
       ${rows.map((r,i)=>{
