@@ -149,6 +149,9 @@ tfoot td{font-weight:700;background:var(--ground);border-top:1px solid var(--lin
 .pill.c1{background:#EDF2FA;color:#33547C}
 .pill.c2{background:#F3EEFB;color:#5B4290}
 .pill.c3{background:#EAF6EF;color:#256B44}
+.lk{font-size:11.5px;font-weight:700;color:var(--hw-deep);opacity:0;margin-left:5px;
+  transition:opacity .12s}
+tr.clickable:hover .lk{opacity:1}
 tr.clickable{cursor:pointer}
 tr.clickable:hover{background:var(--hw-wash)}
 .bar-cell{width:100%;min-width:70px;height:8px;background:var(--line-2);overflow:hidden}
@@ -1912,6 +1915,7 @@ function viewSepMonth(){
     ${SEP().m}월 실적이 아직 입력되지 않았습니다.</div></div></div>`;
 
   const rows = S.roster.slice().sort((a,b)=> b.agr-a.agr || (b.join?1:0)-(a.join?1:0));
+  const hasList = (SEP().list||[]).length>0;
   return head + `
   <div class="sec">
     <div class="sec-hd"><h2>주차별 실적</h2><span class="desc">기준일 ${esc(BASE())}</span></div>
@@ -1928,7 +1932,7 @@ function viewSepMonth(){
 
   <div class="sec">
     <div class="sec-hd"><h2>상담사별 상세</h2>
-      <span class="desc">동의건수 · 구간 · 인센티브</span>
+      <span class="desc">동의건수 · 구간 · 인센티브${hasList?' · 행을 누르면 동의 리스트가 열립니다':''}</span>
       <span class="right">참여 ${nf(S.joined.length)}명 / 명단 ${nf(S.roster.length)}명</span></div>
     <div class="card">
       <div class="card-pad" style="padding-bottom:0"><div class="toolbar">
@@ -1938,15 +1942,19 @@ function viewSepMonth(){
       <table><thead><tr><th class="c" style="width:46px">순위</th><th class="l">센터</th><th class="l">팀</th>
         <th class="l">사번</th><th class="l">상담사명</th><th class="c">참여</th><th>동의건수</th>
         <th class="c">구간</th><th>인센티브</th></tr></thead><tbody>
-      ${rows.map((r,i)=>`<tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+r.id)}">
+      ${rows.map((r,i)=>{
+        const linked = r.agr>0 && hasList;   /* 동의 내역이 있을 때만 리스트로 연결 */
+        return `<tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+r.id)}"
+          ${linked?`class="clickable" onclick="go('seplist:${esc(r.id)}')"
+            title="${esc(r.name)} 상담사 동의 리스트 보기"`:''}>
         <td class="c">${r.agr>0?`<span class="rk ${i<3?'r'+(i+1):''}">${i+1}</span>`:'<span class="mute">-</span>'}</td>
         <td class="l"><span class="pill c${CO.indexOf(r.center)+1}">${esc(r.center)}</span></td>
         <td class="l mute">${esc(r.team)}</td><td class="l mute">${esc(r.id)}</td>
-        <td class="l"><b>${esc(r.name)}</b></td>
+        <td class="l"><b>${esc(r.name)}</b>${linked?' <span class="lk">동의내역 ›</span>':''}</td>
         <td class="c">${r.join?'<span class="chip up">참여</span>':'<span class="chip">미참여</span>'}</td>
         <td class="agr">${nf(r.agr)}</td>
         <td class="c">${r.tier?`<span class="chip or">${esc(r.tier.name)}</span>`:'<span class="mute">-</span>'}</td>
-        <td>${r.inc?`<b>${won(r.inc)}</b>`:'<span class="mute">0원</span>'}</td></tr>`).join('')}
+        <td>${r.inc?`<b>${won(r.inc)}</b>`:'<span class="mute">0원</span>'}</td></tr>`;}).join('')}
       </tbody><tfoot><tr><td></td><td class="l">합계</td><td></td><td></td>
         <td class="l">${nf(S.roster.length)}명</td><td class="c">${nf(S.joined.length)}명</td>
         <td class="agr">${nf(S.agr)}</td><td class="c">${nf(S.ach)}명</td>
@@ -1962,28 +1970,40 @@ function maskPolicy(v){ v=String(v||''); return v.length>10 ? v.slice(0,6)+'…'
 function maskCust(v){ v=String(v||''); return v.length>4 ? '…'+v.slice(-4) : v; }
 function maskBirth(v){ v=String(v||''); return v.length>=4 ? v.slice(0,4)+'년생' : v; }
 
-function viewSepList(){
-  const L = (SEP().list||[]).map(r=>({wk:r[0], date:r[1], id:r[2], name:r[3],
+function viewSepList(empId){
+  const ALL = (SEP().list||[]).map(r=>({wk:r[0], date:r[1], id:r[2], name:r[3],
     ch:r[4], policy:r[5], cust:r[6], birth:r[7]}));
+  const L = empId ? ALL.filter(r=>r.id===String(empId)) : ALL;
+  const who = empId ? (L[0] || ALL.find(r=>r.id===String(empId))) : null;
+  const whoName = who ? who.name
+    : (empId ? ((SEP().roster||[]).filter(r=>r[2]===String(empId))[0]||[])[3] || '' : '');
   const mask = SEP().maskPII !== false;
 
   const head = `
   <div class="sec">
     <div class="sec-hd"><h2>${SEP().m}월 동의 리스트</h2>
-      <span class="desc">엑셀 동의List · 기준일 ${esc(BASE())}</span>
+      <span class="desc">${empId
+        ? `<b style="color:var(--hw-deep)">${esc(whoName)}</b> 상담사 · 사번 ${esc(empId)}`
+        : `엑셀 동의List · 기준일 ${esc(BASE())}`}</span>
       <span class="right" style="display:flex;gap:8px">
+        ${empId?`<button class="tab" style="padding:4px 12px;font-size:12.5px;
+          border:1px solid var(--hw-pale);border-radius:8px;background:var(--hw-wash);
+          color:var(--hw-deep)" onclick="go('seplist')">전체 리스트</button>`:''}
         <button class="tab" style="padding:4px 12px;font-size:12.5px;
           border:1px solid var(--line);border-radius:8px" onclick="go('sep')">← ${SEP().m}월 실적</button>
       </span></div>`;
 
   if(!L.length) return head + `<div class="card"><div class="emptybox">
-    동의 리스트가 아직 입력되지 않았습니다.</div></div></div>`;
+    ${empId ? `${esc(whoName||empId)} 상담사의 동의 내역이 없습니다.`
+            : '동의 리스트가 아직 입력되지 않았습니다.'}</div></div></div>`;
 
   const byWk = [...new Set(L.map(r=>r.wk))].map(w=>({k:w, n:L.filter(r=>r.wk===w).length}));
 
   return head + `
     <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)">
-      ${kpi('총 동의 건수', nf(L.length), '건', `상담사 ${nf(new Set(L.map(r=>r.name)).size)}명`, 'acc')}
+      ${kpi(empId?'동의 건수':'총 동의 건수', nf(L.length), '건',
+        empId ? `${esc(whoName)} · 전체 ${nf(ALL.length)}건 중 ${pct(L.length,ALL.length,1)}`
+              : `상담사 ${nf(new Set(L.map(r=>r.name)).size)}명`, 'acc')}
       <div class="kpi">
         <div class="kpi-l">주차별 동의건수</div>
         <div style="margin-top:6px">
@@ -2039,12 +2059,15 @@ function filterRows(inp){
   if(c) c.textContent = q ? `${n}명 검색됨` : '';
 }
 function go(v){
-  const active = v==='seplist' ? 'sep' : String(v);   /* 리스트 화면에서도 9월 탭 활성 유지 */
+  const vs = String(v);
+  /* 리스트 화면(상담사 필터 포함)에서도 9월 탭 활성 유지 */
+  const active = vs==='seplist' || vs.indexOf('seplist:')===0 ? 'sep' : vs;
   document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.toggle('on', b.dataset.v===active));
   try{
-    $('#view').innerHTML = v==='main'    ? viewMain()
-                         : v==='sep'     ? viewSepMonth()
-                         : v==='seplist' ? viewSepList()
+    $('#view').innerHTML = vs==='main'    ? viewMain()
+                         : vs==='sep'     ? viewSepMonth()
+                         : vs==='seplist' ? viewSepList()
+                         : vs.indexOf('seplist:')===0 ? viewSepList(vs.slice(8))
                          : viewMonth(Number(v));
   }catch(err){
     /* 화면 전체를 JS 로 그리므로, 오류가 나면 백지 대신 원인을 보여준다 */
