@@ -107,6 +107,12 @@ body{background:var(--page);color:var(--ink);font-size:15px;line-height:1.55;
   border-radius:var(--r);box-shadow:none;display:flex;flex-direction:column}
 .tile-bar .gauge-wrap{flex:1;justify-content:center}
 .gauge-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+/* 상단 한 줄 배치 : 참여율(넓게) + KPI 2장. 게이지와 수치가 가로로 나란히 놓여 카드 높이가 낮아진다 */
+.top-row{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) minmax(0,1fr);align-items:stretch}
+@media (max-width:1100px){.top-row{grid-template-columns:1fr 1fr}
+  .top-row>:first-child{grid-column:1 / -1}}
+@media (max-width:760px){.top-row{grid-template-columns:1fr}
+  .top-row>:first-child{grid-column:auto}}
 .gauge-meta{display:flex;flex-direction:column;gap:11px;min-width:150px}
 .ring-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .ring{display:flex;flex-direction:column;align-items:center;gap:9px;padding:16px 8px;
@@ -1867,7 +1873,7 @@ function viewMain(){
   <div class="sec">
     <div class="sec-hd"><h2>전체 누적 실적</h2><span class="desc">2026년 1월 ~ ${hasSep?SEP().m:M[M.length-1].m}월${hasSep?' (9월 집계중)':''}</span>
       <span class="right">데이터 기준일 ${esc(BASE())}</span></div>
-    <div class="grid" style="grid-template-columns:minmax(0,320px) minmax(0,1fr)">
+    <div class="grid top-row">
       <div class="card tile-bar card-pad">
         <div class="ctitle">9월 참여율</div>
         ${empty ? `<div class="gauge-wrap">
@@ -1894,12 +1900,10 @@ function viewMain(){
           </div>
         </div>`}
       </div>
-      <div class="grid" style="grid-template-columns:minmax(0,1fr);align-content:stretch">
-        ${kpi('전체 동의 누적건수', nf(all.agr), '건', `<span class="chip or">최고 ${best.m}월 ${nf(best.agr)}건</span>`, 'acc')}
-        ${empty ? kpi('9월 동의 (자율참여)', '—', '', '<span class="chip">데이터 입력 대기</span>', '')
-          : kpi('9월 동의 (자율참여)', nf(S.agr), '건',
-              `인센티브 <b style="color:var(--hw-deep)">${won(S.inc)}</b>`, 'acc')}
-      </div>
+      ${kpi('전체 동의 누적건수', nf(all.agr), '건', `<span class="chip or">최고 ${best.m}월 ${nf(best.agr)}건</span>`, 'acc')}
+      ${empty ? kpi('9월 동의 (자율참여)', '—', '', '<span class="chip">데이터 입력 대기</span>', '')
+        : kpi('9월 동의 (자율참여)', nf(S.agr), '건',
+            `인센티브 <b style="color:var(--hw-deep)">${won(S.inc)}</b>`, 'acc')}
     </div>
   </div>
 
