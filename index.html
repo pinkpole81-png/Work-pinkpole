@@ -962,7 +962,7 @@ const DATA = {
        ※ 고객 개인정보가 포함되므로 화면에는 마스킹해서 표시한다.
           전체 표시가 필요하면 아래 maskPII 를 false 로. 단, 이 파일은 메일·웹으로
           공유되므로 배포 범위를 반드시 먼저 확인할 것. */
-    maskPII: true,
+    maskPII: false,   /* 로컬 파일만 전체 표시. 게시본(웹 링크)은 빌드 때 true 로 되돌린다 */
     list: [
       ["1주차","2026-09-02","8094333","김윤희","363463449"],
       ["1주차","2026-09-02","8061833","오윤정","104478824"],
@@ -2173,7 +2173,8 @@ function viewSepList(empId){
   <div class="sec">
     <div class="sec-hd"><h2>건별 내역</h2>
       <span class="desc">${nf(L.length)}건 · 최신순</span>
-      ${mask?`<span class="right">고객 식별정보는 일부만 표시됩니다</span>`:''}</div>
+      <span class="right">${mask?'고객 식별정보는 일부만 표시됩니다'
+        :'<b style="color:var(--hw-deep)">고객번호 전체 표시 · 대외 공유 금지</b>'}</span></div>
     <div class="card">
       <div class="card-pad" style="padding-bottom:0"><div class="toolbar">
         <input class="inp" id="q4" placeholder="상담사명 · 사번 · 날짜 · 주차 검색" oninput="filterRows(this)">
@@ -2194,7 +2195,10 @@ function viewSepList(empId){
       </div>
     </div>
     ${mask?`<div class="notice gray" style="margin-top:12px"><span>ℹ</span><div>
-      고객번호는 <b>고객 개인정보</b>이므로 뒤 4자리만 표시합니다.</div></div>`:''}
+      고객번호는 <b>고객 개인정보</b>이므로 뒤 4자리만 표시합니다.</div></div>`
+    :`<div class="notice" style="margin-top:12px"><span>⚠</span><div>
+      <b>고객번호가 전체 표시된 파일입니다.</b> 고객 개인정보가 그대로 담겨 있으므로
+      사내 업무 목적으로만 사용하고, 외부 전달·재배포는 하지 마십시오.</div></div>`}
   </div>`;
 }
 
