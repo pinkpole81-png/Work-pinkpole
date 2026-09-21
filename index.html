@@ -1834,9 +1834,8 @@ function viewMain(){
   const empty = S.agr===0 && wAgr===0;
   /* 9월 실적이 들어오면 누계에 포함 (9월은 집계 중이므로 차트·안내에 그 사실을 표기) */
   const hasSep = !empty;
-  /* 동의 누계는 9월을 포함. 시도·동의율은 9월부터 추출하지 않으므로 1~8월 기준 */
+  /* 동의 누계는 9월을 포함 (시도·동의율은 9월부터 추출하지 않아 화면에서 제외) */
   const all = {agr: tot.agr + (hasSep?wAgr:0)};
-  const mSpan = '1~'+M[M.length-1].m+'월';
   const span = hasSep ? `1~${SEP().m}월` : '1~'+M[M.length-1].m+'월';
 
   /* 구간별 인원 / 금액 */
@@ -1895,10 +1894,8 @@ function viewMain(){
           </div>
         </div>`}
       </div>
-      <div class="grid g-2" style="align-content:stretch">
+      <div class="grid" style="grid-template-columns:minmax(0,1fr);align-content:stretch">
         ${kpi('전체 동의 누적건수', nf(all.agr), '건', `<span class="chip or">최고 ${best.m}월 ${nf(best.agr)}건</span>`, 'acc')}
-        ${kpi('전체 시도 누적건수', nf(tot.att), '건', `${mSpan} · 월 평균 ${nf(tot.att/M.length)}건`, '')}
-        ${kpi('평균 동의율', pct(tot.agr,tot.att), '', `${mSpan} 기준 · 동의건수 ÷ 시도건수`, '')}
         ${empty ? kpi('9월 동의 (자율참여)', '—', '', '<span class="chip">데이터 입력 대기</span>', '')
           : kpi('9월 동의 (자율참여)', nf(S.agr), '건',
               `인센티브 <b style="color:var(--hw-deep)">${won(S.inc)}</b>`, 'acc')}
@@ -1914,8 +1911,6 @@ function viewMain(){
       <div class="hero-top">
         <div class="hero-figs">
           <div><span class="hf-l">${span} 누적 동의</span><b>${nf(all.agr)}<i>건</i></b></div>
-          <div><span class="hf-l">${mSpan} 누적 시도</span><b>${nf(tot.att)}<i>건</i></b></div>
-          <div><span class="hf-l">${mSpan} 평균 동의율</span><b>${pct(tot.agr,tot.att)}</b></div>
         </div>
         <div class="legend">
           <span><i style="background:linear-gradient(180deg,#FFC08A,#FF9A4D)"></i>월 동의건수</span>
