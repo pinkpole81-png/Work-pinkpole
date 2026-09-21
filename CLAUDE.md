@@ -56,10 +56,18 @@ https://claude.ai/code/artifact/f370a6d6-30cf-42d0-9964-b50458ad0869
 ## 주차 데이터 갱신 도구 (`go('update')` → `viewUpdate()`)
 
 사용자가 업무망에서 직접 주차를 갱신할 수 있도록 넣은 화면. 하단 링크로 진입한다.
-외부 라이브러리 없이 **엑셀 복사 → 탭 구분 텍스트 붙여넣기**로 동작한다.
+외부 라이브러리 없이 동작한다. 기본은 **엑셀 파일 업로드**, 대체 수단으로
+**탭 구분 텍스트 붙여넣기**(접힌 영역)를 둔다.
 
-- `parseRoster()` / `parseList()` — `findCols()` 로 머리글을 찾아 열을 매핑하므로
-  시트를 통째로 붙여넣어도 되고 열 순서가 바뀌어도 된다
+- `readXlsx()` / `unzip()` / `sheetToRows()` — xlsx 는 ZIP+XML 이므로
+  브라우저 내장 `DecompressionStream('deflate-raw')` 로 풀고 `DOMParser` 로 읽는다.
+  날짜는 스타일을 해석하지 않고 엑셀 일련번호 그대로 두어 `ymd()` 가 변환한다
+  (styles.xml 파싱을 피하려는 의도적 선택).
+  `DecompressionStream` 이 없는 구형 브라우저는 붙여넣기로 안내한다
+- `upPick()` — 시트 이름에 기대지 않고 `ROSTER_SPEC`/`LIST_SPEC` 머리글이
+  맞는 시트를 골라낸다
+- `parseRoster()` / `parseList()` — **행 배열**을 받는다(파일·붙여넣기 공통 경로).
+  `findCols()` 로 머리글을 찾아 열을 매핑하므로 열 순서가 바뀌어도 된다
 - `weeksFrom()` — 주차 실적을 **동의 리스트에서 파생**시킨다(따로 입력받지 않음).
   덕분에 주차 합계와 리스트 건수가 구조적으로 어긋날 수 없다
 - `upRun()` — 3중 검산 + 상담사 단위 대조. 모두 통과해야 저장 버튼이 나온다
