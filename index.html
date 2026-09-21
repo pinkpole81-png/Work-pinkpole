@@ -169,6 +169,34 @@ tr.clickable:hover{background:var(--hw-wash)}
 .notice.sample b{color:#5C4209}
 .legend{display:flex;gap:16px;font-size:12.5px;color:var(--slate);flex-wrap:wrap}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+/* 주차 데이터 갱신 도구 */
+.up-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.up-no{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  background:var(--hw);color:#fff;font-size:12px;font-weight:800}
+.up-ta{width:100%;min-height:104px;box-sizing:border-box;padding:11px 13px;font-size:12.5px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.5;border:1px solid var(--line);
+  border-radius:10px;background:#fff;color:var(--ink);resize:vertical}
+.up-ta:focus{outline:2px solid var(--hw-pale);border-color:var(--hw)}
+.up-act{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.up-btn{padding:8px 18px;font-size:13px;font-weight:700;border:1px solid var(--line);
+  border-radius:9px;background:#fff}
+.up-btn.primary{background:var(--hw);border-color:var(--hw);color:#fff}
+.up-box{margin-top:16px;padding:15px 17px;border-radius:12px;border:1px solid var(--line-2);
+  background:var(--ground)}
+.up-box.ok{border-color:#BFE3C8;background:#F2FAF4}
+.up-box.bad{border-color:#F3C9C0;background:#FDF5F3}
+.up-chk{display:flex;gap:9px;align-items:flex-start;font-size:13px;margin-top:7px;line-height:1.5}
+.up-chk>span{flex:none;font-weight:800}
+.up-chk.y>span{color:#2E7D4F} .up-chk.n>span{color:#C0392B}
+.up-weeks{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.up-weeks>div{background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:8px 12px;
+  font-size:12.5px;display:flex;gap:8px;align-items:baseline}
+.up-weeks i{font-style:normal;font-weight:800;color:var(--hw-deep)}
+.up-range{width:104px;padding:4px 8px;font-size:12.5px;border:1px solid var(--line);
+  border-radius:7px;background:#fff;color:var(--slate);text-align:center}
+.up-link{background:none;border:0;padding:0;font:inherit;color:var(--slate);cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px}
+.up-link:hover{color:var(--hw-deep)}
 .foot{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;
   color:var(--slate-l);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .nojs{background:var(--tile);border:1px solid var(--tile-line);border-top:3px solid var(--hw);
@@ -280,7 +308,9 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
     </div>
   </noscript>
   <main id="view"></main>
-  <div class="foot"><div id="footL"></div><div>한화손보 고객상담파트 내부보고용</div></div>
+  <div class="foot"><div id="footL"></div>
+    <div>한화손보 고객상담파트 내부보고용
+      · <button class="up-link" onclick="go('update')">주차 데이터 갱신</button></div></div>
 </div>
 
 <script>
@@ -2224,6 +2254,7 @@ function go(v){
                          : vs==='sep'     ? viewSepMonth()
                          : vs==='seplist' ? viewSepList()
                          : vs.indexOf('seplist:')===0 ? viewSepList(vs.slice(8))
+                         : vs==='update'  ? viewUpdate()
                          : viewMonth(Number(v));
   }catch(err){
     /* 화면 전체를 JS 로 그리므로, 오류가 나면 백지 대신 원인을 보여준다 */
@@ -2250,6 +2281,274 @@ function paintChrome(){
   $('#footL').innerHTML = `데이터 기준일 <b style="color:#464F69">${esc(BASE())}</b>` +
     (sampleOn ? ' <span style="color:#B08214;font-weight:700">· 샘플 데이터</span>' : '') +
     ` · 최종 갱신 ${esc(DATA.meta.updatedAt)} · 작성 ${esc(DATA.meta.owner)}`;
+}
+
+/* ============================ 주차 데이터 갱신 도구 ============================
+   업무망(인터넷 없음)에서 엑셀 내용을 붙여넣어 주차 실적을 갱신하고,
+   갱신된 index.html 을 내려받기 위한 화면. 외부 라이브러리를 쓰지 않는다.
+   엑셀에서 범위를 복사하면 클립보드에 탭 구분 텍스트가 들어오는 점을 이용한다. */
+
+const UP = { roster:null, list:null, weeks:null, msg:[], ok:false };
+
+function tsvRows(text){
+  return String(text||'').replace(/\r/g,'').split('\n')
+    .map(l=>l.split('\t')).filter(r=>r.some(c=>String(c).trim()!==''));
+}
+const nz   = v => String(v==null?'':v).trim();
+const dig  = v => nz(v).replace(/[^0-9]/g,'');
+const p2   = n => ('0'+n).slice(-2);
+const YEAR = () => (DATA.meta.baseDate||'').slice(0,4) || String(new Date().getFullYear());
+
+/* 시트를 통째로 붙여넣어도 되도록 머리글 행을 찾아 열 위치를 잡는다 */
+function findCols(rows, spec){
+  for(let i=0;i<Math.min(rows.length,40);i++){
+    const cells = rows[i].map(c=>nz(c).replace(/\s/g,''));
+    const map={}; let ok=true;
+    for(const key in spec){
+      let idx=-1;
+      for(const n of spec[key]){
+        idx = cells.findIndex(c=>c && c.indexOf(n)>=0);
+        if(idx>=0) break;
+      }
+      if(idx<0){ ok=false; break; }
+      map[key]=idx;
+    }
+    if(ok) return {row:i, map};
+  }
+  return null;
+}
+
+/* 엑셀 날짜는 표시 형식이 제각각이라 넉넉히 받아 YYYY-MM-DD 로 통일 */
+function ymd(v){
+  const s=nz(v); if(!s) return '';
+  let m=s.match(/(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})/);
+  if(m) return m[1]+'-'+p2(m[2])+'-'+p2(m[3]);
+  m=s.match(/^(\d{1,2})[-./](\d{1,2})[-./](\d{4})/);
+  if(m) return m[3]+'-'+p2(m[1])+'-'+p2(m[2]);
+  m=s.match(/^(\d{1,2})[-./](\d{1,2})$/);
+  if(m) return YEAR()+'-'+p2(m[1])+'-'+p2(m[2]);
+  const n=Number(s);
+  if(isFinite(n) && n>20000 && n<80000){
+    try{ return new Date(Date.UTC(1899,11,30)+n*86400000).toISOString().slice(0,10); }catch(e){}
+  }
+  return s;
+}
+
+function parseRoster(text){
+  const rows=tsvRows(text);
+  const h=findCols(rows,{center:['센터'],team:['팀'],id:['사번'],
+    name:['상담사명','직원명','성명'],join:['참여여부','참여'],
+    agr:['동의획득건수','동의건수','동의']});
+  if(!h) throw new Error('상담사별 실적: 머리글(센터 · 팀 · 사번 · 상담사명 · 참여여부 · 동의건수)을 찾지 못했습니다.');
+  const out=[];
+  for(let i=h.row+1;i<rows.length;i++){
+    const r=rows[i], id=dig(r[h.map.id]), name=nz(r[h.map.name]);
+    if(!id || !name) continue;
+    const jv=nz(r[h.map.join]);
+    out.push([nz(r[h.map.center]), nz(r[h.map.team]), id, name,
+      (jv==='참여'||jv==='1'||jv==='O'||jv==='Y') ? 1 : 0,
+      parseInt(dig(r[h.map.agr])||'0',10)]);
+  }
+  if(!out.length) throw new Error('상담사별 실적: 읽어들인 행이 없습니다.');
+  return out;
+}
+
+function parseList(text){
+  const rows=tsvRows(text);
+  const h=findCols(rows,{wk:['주간','주차'],date:['날짜','일자'],id:['사번'],
+    name:['상담사명','직원명','성명'],cust:['고객번호']});
+  if(!h) throw new Error('동의 리스트: 머리글(주간 · 날짜 · 사번 · 상담사명 · 고객번호)을 찾지 못했습니다.');
+  const out=[];
+  for(let i=h.row+1;i<rows.length;i++){
+    const r=rows[i], id=dig(r[h.map.id]), wk=nz(r[h.map.wk]);
+    if(!id || !wk) continue;
+    out.push([wk, ymd(r[h.map.date]), id, nz(r[h.map.name]), dig(r[h.map.cust])]);
+  }
+  if(!out.length) throw new Error('동의 리스트: 읽어들인 행이 없습니다.');
+  return out;
+}
+
+/* 주차 실적은 동의 리스트에서 직접 뽑는다. 따로 입력하지 않으므로 서로 어긋날 수 없다 */
+function weeksFrom(list){
+  const by={}, order=[];
+  list.forEach(r=>{ if(!by[r[0]]){ by[r[0]]=[]; order.push(r[0]); } by[r[0]].push(r[1]); });
+  order.sort((a,b)=>(parseInt(dig(a)||'0',10)-parseInt(dig(b)||'0',10)) || a.localeCompare(b));
+  const md = s => s ? String(Number(s.slice(5,7)))+'/'+s.slice(8,10) : '';
+  return order.map(w=>{
+    const ds=by[w].filter(Boolean).slice().sort();
+    return {label:w, range: ds.length ? md(ds[0])+'~'+md(ds[ds.length-1]) : '', agr:by[w].length};
+  });
+}
+
+function upRun(){
+  UP.msg=[]; UP.ok=false; UP.roster=UP.list=UP.weeks=null;
+  const add=(ok,t)=>UP.msg.push({ok,t});
+  try{
+    UP.roster = parseRoster($('#upRoster').value);
+    UP.list   = parseList($('#upList').value);
+    UP.weeks  = weeksFrom(UP.list);
+
+    const rSum = UP.roster.reduce((a,r)=>a+r[5],0);
+    const wSum = UP.weeks.reduce((a,w)=>a+w.agr,0);
+    add(true, `상담사 ${nf(UP.roster.length)}명 · 참여 ${nf(UP.roster.filter(r=>r[4]).length)}명 읽음`);
+    add(true, `동의 리스트 ${nf(UP.list.length)}건 · ${UP.weeks.length}개 주차 읽음`);
+
+    add(rSum===UP.list.length,
+      `상담사별 동의합계 ${nf(rSum)}건 vs 리스트 ${nf(UP.list.length)}건 — `
+      + (rSum===UP.list.length ? '일치' : '불일치'));
+    add(wSum===UP.list.length,
+      `주차별 합계 ${nf(wSum)}건 vs 리스트 ${nf(UP.list.length)}건 — `
+      + (wSum===UP.list.length ? '일치' : '불일치'));
+
+    /* 상담사 단위까지 맞는지 확인 — 합계만 맞고 사람이 어긋나는 경우를 잡는다 */
+    const cnt={}; UP.list.forEach(r=>{ cnt[r[2]]=(cnt[r[2]]||0)+1; });
+    const bad=UP.roster.filter(r=>r[5]!==(cnt[r[2]]||0));
+    const ghost=Object.keys(cnt).filter(id=>!UP.roster.some(r=>r[2]===id));
+    add(!bad.length, bad.length
+      ? `상담사별 건수 불일치 ${bad.length}명 (예: ${bad.slice(0,3).map(r=>r[3]+' '+r[5]+'↔'+(cnt[r[2]]||0)).join(', ')})`
+      : '상담사별 건수 전원 일치');
+    if(ghost.length) add(false, `명단에 없는 사번이 리스트에 있음: ${ghost.slice(0,5).join(', ')}`);
+
+    const ds=UP.list.map(r=>r[1]).filter(Boolean).sort();
+    if(ds.length && !$('#upBase').value) $('#upBase').value = ds[ds.length-1];
+
+    UP.ok = UP.msg.every(m=>m.ok) && !ghost.length;
+  }catch(err){ add(false, String((err&&err.message)||err)); }
+  $('#upResult').innerHTML = upResultHtml();
+}
+
+function upResultHtml(){
+  if(!UP.msg.length) return '';
+  const rows=UP.msg.map(m=>`<div class="up-chk ${m.ok?'y':'n'}">
+    <span>${m.ok?'✓':'✕'}</span><div>${esc(m.t)}</div></div>`).join('');
+  const wk = UP.weeks ? `<div class="hint" style="margin-top:13px">주차 기간은 동의 날짜에서 계산한 값입니다.
+      실제 운영 주차와 다르면 아래에서 고칠 수 있습니다.</div>
+    <div class="up-weeks">${UP.weeks.map((w,i)=>
+      `<div><b>${esc(w.label)}</b>
+        <input class="inp up-range" data-i="${i}" value="${esc(w.range)}"
+          aria-label="${esc(w.label)} 기간">
+        <i>${nf(w.agr)}건</i></div>`).join('')}</div>` : '';
+  return `<div class="up-box ${UP.ok?'ok':'bad'}">
+    <div class="ctitle">${UP.ok?'검증 통과':'확인이 필요합니다'}</div>
+    ${rows}${wk}
+    ${UP.ok?`<div class="up-act">
+      <button class="tab up-btn" onclick="upApply()">미리보기 적용</button>
+      <button class="tab up-btn primary" onclick="upSave()">새 index.html 저장</button>
+    </div>
+    <div class="hint">‘미리보기 적용’은 지금 열린 화면만 바꿉니다.
+      파일을 실제로 갱신하려면 <b>새 index.html 저장</b> 을 눌러 내려받은 파일로 기존 파일을 바꿔주세요.</div>`
+    :`<div class="hint">불일치 항목을 해결한 뒤 다시 확인해 주세요.
+      숫자가 맞지 않으면 원본 엑셀에 누락·중복이 있을 수 있습니다.</div>`}
+  </div>`;
+}
+
+function upStage(){
+  if(!UP.ok) return false;
+  DATA.meta.baseDate  = $('#upBase').value || DATA.meta.baseDate;
+  DATA.meta.updatedAt = new Date().toISOString().slice(0,10);
+  document.querySelectorAll('.up-range').forEach(el=>{
+    const i=Number(el.dataset.i);
+    if(UP.weeks[i]) UP.weeks[i].range = el.value.trim();
+  });
+  DATA.sep.weeks  = UP.weeks.map(w=>({label:w.label, range:w.range, agr:w.agr}));
+  DATA.sep.roster = UP.roster;
+  DATA.sep.list   = UP.list;
+  return true;
+}
+function upApply(){
+  if(!upStage()) return;
+  paintChrome(); renderTabs(); go('main');
+}
+
+/* DATA 블록만 새 값으로 바꾼 전체 HTML 을 만들어 내려받는다 */
+function upSource(){
+  const root = document.documentElement.cloneNode(true);
+  const clear = (sel,html) => { const e=root.querySelector(sel); if(e) e.innerHTML=html; };
+  clear('#view',''); clear('#tabs',''); clear('#footL','');
+  const bd=root.querySelector('#basisDate'); if(bd) bd.textContent='-';
+  const sc=[].slice.call(root.querySelectorAll('script'))
+    .filter(s=>s.textContent.indexOf('const DATA')>=0)[0];
+  if(!sc) throw new Error('DATA 블록을 찾지 못했습니다.');
+
+  const q=JSON.stringify;
+  const weeks='\n' + DATA.sep.weeks.map(w=>
+    `      { label:${q(w.label)}, range:${q(w.range)}, agr:${w.agr} }`).join(',\n') + '\n    ';
+  const roster='\n' + DATA.sep.roster.map(r=>
+    `      [${q(r[0])},${q(r[1])},${q(r[2])},${q(r[3])}, ${r[4]}, ${r[5]}]`).join(',\n') + '\n    ';
+  const list='\n' + DATA.sep.list.map(r=>
+    `      [${q(r[0])},${q(r[1])},${q(r[2])},${q(r[3])},${q(r[4])}]`).join(',\n') + '\n    ';
+
+  let t=sc.textContent;
+  const before=t;
+  t=t.replace(/baseDate\s*:\s*"[^"]*"/,  'baseDate : '+q(DATA.meta.baseDate));
+  t=t.replace(/updatedAt\s*:\s*"[^"]*"/, 'updatedAt: '+q(DATA.meta.updatedAt));
+  t=t.replace(/(\n    weeks: \[)[\s\S]*?(\n    \],)/,  '$1'+weeks.replace(/\$/g,'$$$$')+'],');
+  t=t.replace(/(\n    roster: \[)[\s\S]*?(\n    \],)/, '$1'+roster.replace(/\$/g,'$$$$')+'],');
+  t=t.replace(/(\n    list: \[)[\s\S]*?(\n    \])/,    '$1'+list.replace(/\$/g,'$$$$')+']');
+  if(t===before) throw new Error('DATA 블록을 바꾸지 못했습니다.');
+  sc.textContent=t;
+  /* 문서 선언 문자열을 쪼개 둔 이유 : 게시본 빌드 스크립트가 해당 문자열이 남아 있는지로
+     래퍼 태그 제거 여부를 검사하므로, 이 리터럴이 그 검사에 걸리지 않게 하기 위함 */
+  return '<!' + 'DOCTYPE html>\n<html lang="ko">\n' + root.innerHTML + '\n</html>\n';
+}
+
+function upSave(){
+  try{
+    if(!upStage()) return;
+    const html=upSource();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+    a.download='index.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(a.href); },1500);
+    paintChrome(); renderTabs();
+    $('#upResult').innerHTML = `<div class="up-box ok"><div class="ctitle">저장했습니다</div>
+      <div class="up-chk y"><span>✓</span><div>내려받은 <b>index.html</b> 로 기존 파일을 덮어쓰면
+        다음부터 이 내용으로 열립니다.</div></div></div>`;
+  }catch(err){
+    $('#upResult').innerHTML = `<div class="up-box bad"><div class="ctitle">저장하지 못했습니다</div>
+      <div class="up-chk n"><span>✕</span><div>${esc(String((err&&err.message)||err))}</div></div>
+      <div class="hint">브라우저에서 내려받기가 막혀 있으면 저장되지 않습니다.
+        파일을 브라우저로 직접 열어(주소가 file:// 로 시작) 다시 시도해 주세요.</div></div>`;
+  }
+}
+
+function viewUpdate(){
+  return `
+  <div class="sec">
+    <div class="sec-hd"><h2>주차 데이터 갱신</h2>
+      <span class="desc">엑셀에서 복사해 붙여넣기 · 인터넷 연결 불필요</span>
+      <span class="right"><button class="tab" style="padding:4px 12px;font-size:12.5px;
+        border:1px solid var(--line);border-radius:8px" onclick="go('main')">← 대시보드</button></span></div>
+
+    <div class="notice gray"><span>ℹ</span><div>
+      엑셀에서 <b>시트 전체를 선택(Ctrl+A)해 복사(Ctrl+C)</b> 한 뒤 아래 칸에 붙여넣으면 됩니다.
+      머리글을 찾아 필요한 열만 자동으로 읽으므로 열 순서가 달라도 됩니다.
+      <b>주차별 실적은 동의 리스트에서 자동 계산</b>되므로 따로 입력하지 않습니다.</div></div>
+
+    <div class="card card-pad">
+      <div class="up-step"><span class="up-no">1</span>
+        <div><b>‘실적 및 인센티브’ 시트</b> 붙여넣기
+          <div class="hint" style="margin:2px 0 0">센터 · 팀 · 사번 · 상담사명 · 참여여부 · 동의획득건수</div></div></div>
+      <textarea class="up-ta" id="upRoster" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
+
+      <div class="up-step" style="margin-top:18px"><span class="up-no">2</span>
+        <div><b>‘동의List’ 시트</b> 붙여넣기
+          <div class="hint" style="margin:2px 0 0">주간 · 날짜 · 직원사번 · 직원명 · 고객번호</div></div></div>
+      <textarea class="up-ta" id="upList" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
+
+      <div class="up-step" style="margin-top:18px"><span class="up-no">3</span>
+        <div><b>데이터 기준일</b>
+          <div class="hint" style="margin:2px 0 0">비워두면 리스트의 마지막 날짜로 채웁니다</div></div></div>
+      <input class="inp" id="upBase" type="date" style="max-width:200px"
+        value="${esc(DATA.meta.baseDate||'')}">
+
+      <div class="up-act" style="margin-top:18px">
+        <button class="tab up-btn primary" onclick="upRun()">확인하기</button>
+      </div>
+      <div id="upResult"></div>
+    </div>
+  </div>`;
 }
 
 /* ================================ 초기화 ================================ */
