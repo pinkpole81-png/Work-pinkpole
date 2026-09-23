@@ -29,5 +29,15 @@ assert link in s, '갱신 링크를 찾지 못함'
 s = s.replace(link, '')
 assert '주차 데이터 갱신</button>' not in s, '게시본에 갱신 링크가 남아 있음'
 
+# 아티팩트 뷰어는 페이지에서 시작하는 내려받기를 막으므로, 눌러도 아무 일이
+# 일어나지 않는 버튼이 된다. 게시본에서는 [엑셀 내려받기] 버튼을 뺀다.
+btn = ('\n        <button class="tab" style="padding:4px 12px;font-size:12.5px;\n'
+       '          border:1px solid var(--line);border-radius:8px" '
+       'onclick="downloadXlsx()">엑셀 내려받기</button>')
+n = s.count(btn)
+assert n == 2, f'엑셀 내려받기 버튼을 2개 찾지 못함 (찾은 수: {n})'
+s = s.replace(btn, '')
+assert '엑셀 내려받기</button>' not in s, '게시본에 엑셀 내려받기 버튼이 남아 있음'
+
 import sys; open(sys.argv[1], 'w', encoding='utf-8').write(s)
 print('artifact build ok —', round(len(s)/1024, 1), 'KB')

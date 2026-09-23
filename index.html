@@ -2101,6 +2101,8 @@ function viewSepMonth(){
           border-radius:8px;background:var(--hw-wash);color:var(--hw-deep)"
           onclick="go('seplist')">동의 리스트</button>
         <button class="tab" style="padding:4px 12px;font-size:12.5px;
+          border:1px solid var(--line);border-radius:8px" onclick="downloadXlsx()">엑셀 내려받기</button>
+        <button class="tab" style="padding:4px 12px;font-size:12.5px;
           border:1px solid var(--line);border-radius:8px" onclick="go('main')">← 대시보드</button>
       </span></div>
     <div class="grid g-3">
@@ -2185,6 +2187,8 @@ function viewSepList(empId){
         ${empId?`<button class="tab" style="padding:4px 12px;font-size:12.5px;
           border:1px solid var(--hw-pale);border-radius:8px;background:var(--hw-wash);
           color:var(--hw-deep)" onclick="go('seplist')">전체 리스트</button>`:''}
+        <button class="tab" style="padding:4px 12px;font-size:12.5px;
+          border:1px solid var(--line);border-radius:8px" onclick="downloadXlsx()">엑셀 내려받기</button>
         <button class="tab" style="padding:4px 12px;font-size:12.5px;
           border:1px solid var(--line);border-radius:8px" onclick="go('sep')">← ${SEP().m}월 실적</button>
       </span></div>`;
@@ -2290,6 +2294,163 @@ function paintChrome(){
   $('#footL').innerHTML = `데이터 기준일 <b style="color:#464F69">${esc(BASE())}</b>` +
     (sampleOn ? ' <span style="color:#B08214;font-weight:700">· 샘플 데이터</span>' : '') +
     ` · 최종 갱신 ${esc(DATA.meta.updatedAt)} · 작성 ${esc(DATA.meta.owner)}`;
+}
+
+/* ---- 반영된 데이터를 엑셀(.xlsx) 로 내려받기 ----
+   ZIP 의 무압축(stored) 방식을 쓰면 압축기 없이도 규격에 맞는 xlsx 를 만들 수 있다.
+   문자열은 sharedStrings 대신 inlineStr 로 넣어 부속 파일을 줄였다. */
+
+let CRC_T=null;
+function crc32(u8){
+  if(!CRC_T){
+    CRC_T=new Uint32Array(256);
+    for(let i=0;i<256;i++){
+      let c=i;
+      for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
+      CRC_T[i]=c>>>0;
+    }
+  }
+  let c=0xFFFFFFFF;
+  for(let i=0;i<u8.length;i++) c=CRC_T[(c^u8[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+
+function zipStore(files){
+  const enc=new TextEncoder(), locals=[], centrals=[];
+  let off=0;
+  files.forEach(f=>{
+    const nb=enc.encode(f.name), data=f.data, crc=crc32(data), sz=data.length;
+    const lh=new Uint8Array(30+nb.length), lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0,true);
+    lv.setUint16(8,0,true);                       /* 0 = 무압축 */
+    lv.setUint16(10,0,true); lv.setUint16(12,0x2821,true);
+    lv.setUint32(14,crc,true); lv.setUint32(18,sz,true); lv.setUint32(22,sz,true);
+    lv.setUint16(26,nb.length,true); lv.setUint16(28,0,true);
+    lh.set(nb,30);
+    locals.push(lh,data);
+
+    const ch=new Uint8Array(46+nb.length), cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0,true); cv.setUint16(10,0,true);
+    cv.setUint16(12,0,true); cv.setUint16(14,0x2821,true);
+    cv.setUint32(16,crc,true); cv.setUint32(20,sz,true); cv.setUint32(24,sz,true);
+    cv.setUint16(28,nb.length,true); cv.setUint16(30,0,true); cv.setUint16(32,0,true);
+    cv.setUint16(34,0,true); cv.setUint16(36,0,true); cv.setUint32(38,0,true);
+    cv.setUint32(42,off,true);
+    ch.set(nb,46);
+    centrals.push(ch);
+    off += lh.length + sz;
+  });
+  const cdSize=centrals.reduce((a,c)=>a+c.length,0);
+  const eo=new Uint8Array(22), ev=new DataView(eo.buffer);
+  ev.setUint32(0,0x06054b50,true);
+  ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,cdSize,true); ev.setUint32(16,off,true);
+  const all=locals.concat(centrals,[eo]);
+  const total=all.reduce((a,c)=>a+c.length,0);
+  const out=new Uint8Array(total);
+  let p=0; all.forEach(c=>{ out.set(c,p); p+=c.length; });
+  return out;
+}
+
+const xesc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function colName(i){
+  let s='';
+  for(i=i+1;i>0;){ const r=(i-1)%26; s=String.fromCharCode(65+r)+s; i=(i-1-r)/26; }
+  return s;
+}
+function sheetXml(rows){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>';
+  rows.forEach((row,ri)=>{
+    x+='<row r="'+(ri+1)+'">';
+    row.forEach((v,ci)=>{
+      if(v==null || v==='') return;
+      const ref=colName(ci)+(ri+1);
+      if(typeof v==='number' && isFinite(v)) x+='<c r="'+ref+'"><v>'+v+'</v></c>';
+      else x+='<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xesc(v)+'</t></is></c>';
+    });
+    x+='</row>';
+  });
+  return x+'</sheetData></worksheet>';
+}
+
+function buildXlsx(sheets){
+  const enc=new TextEncoder(), files=[];
+  const ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    +'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    +'<Default Extension="xml" ContentType="application/xml"/>'
+    +'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+    + sheets.map((s,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml"'
+      +' ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')
+    +'</Types>';
+  const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    +'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"'
+    +' Target="xl/workbook.xml"/></Relationships>';
+  const wb='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+    +' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'
+    + sheets.map((s,i)=>'<sheet name="'+xesc(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')
+    +'</sheets></workbook>';
+  const wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    + sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'"'
+      +' Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"'
+      +' Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')
+    +'</Relationships>';
+  files.push({name:'[Content_Types].xml', data:enc.encode(ct)});
+  files.push({name:'_rels/.rels',          data:enc.encode(rels)});
+  files.push({name:'xl/workbook.xml',      data:enc.encode(wb)});
+  files.push({name:'xl/_rels/workbook.xml.rels', data:enc.encode(wbRels)});
+  sheets.forEach((s,i)=>files.push({name:'xl/worksheets/sheet'+(i+1)+'.xml',
+    data:enc.encode(sheetXml(s.rows))}));
+  return zipStore(files);
+}
+
+/* 화면에 반영된 값 그대로를 시트로 만든다 */
+function exportSheets(){
+  const S=sepData(), m=SEP().m;
+  const mask = SEP().maskPII !== false;
+
+  const months=[['월','시도건수','동의건수','동의율(%)']];
+  M.forEach(x=>months.push([x.m+'월', x.att, x.agr,
+    x.att ? Math.round(x.agr/x.att*1000)/10 : '']));
+  const wAgr=S.weeks.reduce((a,w)=>a+(w.agr||0),0);
+  months.push([m+'월 (집계중)', '', wAgr, '']);
+
+  const weeks=[['주차','기간','동의건수']];
+  S.weeks.forEach(w=>weeks.push([w.label, w.range||'', w.agr||0]));
+  weeks.push(['누계','', wAgr]);
+
+  const ros=[['센터','팀','사번','상담사명','참여여부','동의건수','구간','인센티브(원)']];
+  S.roster.slice().sort((a,b)=>b.agr-a.agr).forEach(r=>ros.push([
+    r.center, r.team, r.id, r.name, r.join?'참여':'미참여', r.agr,
+    r.tier?r.tier.name:'', r.inc||0]));
+  ros.push(['합계','','','', S.joined.length+'명', S.agr, S.ach+'명', S.inc]);
+
+  const list=[['주차','날짜','사번','상담사명','고객번호']];
+  (SEP().list||[]).forEach(r=>list.push([r[0], r[1], r[2], r[3],
+    mask ? maskCust(r[4]) : r[4]]));
+
+  return [{name:'월별실적', rows:months}, {name:'주간실적', rows:weeks},
+          {name:'상담사별', rows:ros},   {name:'동의List', rows:list}];
+}
+
+function downloadXlsx(){
+  try{
+    const bytes=buildXlsx(exportSheets());
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([bytes],
+      {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    a.download='마케팅활용동의_실적_'+String(BASE()||'').replace(/-/g,'')+'.xlsx';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(a.href); },1500);
+  }catch(err){
+    alert('엑셀 파일을 만들지 못했습니다.\n' + String((err&&err.message)||err)
+      + '\n\n파일을 브라우저로 직접 열어(주소가 file:// 로 시작) 다시 시도해 주세요.');
+  }
 }
 
 /* ============================ 주차 데이터 갱신 도구 ============================
@@ -2682,7 +2843,9 @@ function upSave(){
     paintChrome(); renderTabs();
     $('#upResult').innerHTML = `<div class="up-box ok"><div class="ctitle">저장했습니다</div>
       <div class="up-chk y"><span>✓</span><div>내려받은 <b>index.html</b> 로 기존 파일을 덮어쓰면
-        다음부터 이 내용으로 열립니다.</div></div></div>`;
+        다음부터 이 내용으로 열립니다.</div></div>
+      <div class="up-act"><button class="tab up-btn" onclick="downloadXlsx()">반영된 자료 엑셀로 내려받기</button></div>
+      </div>`;
   }catch(err){
     $('#upResult').innerHTML = `<div class="up-box bad"><div class="ctitle">저장하지 못했습니다</div>
       <div class="up-chk n"><span>✕</span><div>${esc(String((err&&err.message)||err))}</div></div>
