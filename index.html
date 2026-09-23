@@ -67,9 +67,6 @@ body{background:var(--page);color:var(--ink);font-size:15px;line-height:1.55;
 .tab-aw::before{content:"";position:absolute;left:6px;top:50%;width:1px;height:16px;
   margin-top:-8px;background:var(--line)}
 .tab-aw.on{color:#fff}
-.tab-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-left:5px;
-  vertical-align:middle;background:var(--slate-l)}
-.tab-aw.on .tab-dot{background:rgba(255,255,255,.75)}
 .tab.first{margin-right:8px;padding-right:14px;border-right:1px solid var(--line);border-radius:9px 0 0 9px}
 .tab.first.on{border-right-color:transparent;border-radius:9px}
 
@@ -2392,9 +2389,10 @@ function renderTabs(){
   $('#tabs').innerHTML = `<button class="tab on first" data-v="main" onclick="go('main')">대시보드</button>`
     + M.map(m=>`<button class="tab" data-v="${m.m}" onclick="go(${m.m})">${m.m}월</button>`).join('')
     + `<button class="tab" data-v="sep" onclick="go('sep')">${SEP().m}월</button>`
-    + `<button class="tab tab-aw" data-v="award" onclick="go('award')">`
-      + `${esc((DATA.award&&DATA.award.label)||'9월 시상')}`
-      + `${AW().length ? '' : '<span class="tab-dot" title="자료 입력 대기"></span>'}</button>`;
+    + (AW().length
+        ? `<button class="tab tab-aw" data-v="award" onclick="go('award')">`
+          + `${esc((DATA.award&&DATA.award.label)||'9월 시상')}</button>`
+        : '');
 }
 
 /* ================================ 헤더 · 하단 표기 ================================ */
