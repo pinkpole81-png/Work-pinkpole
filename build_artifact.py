@@ -37,6 +37,10 @@ btn = ('\n        <button class="tab" style="padding:4px 12px;font-size:12.5px;\
 n = s.count(btn)
 assert n == 2, f'엑셀 내려받기 버튼을 2개 찾지 못함 (찾은 수: {n})'
 s = s.replace(btn, '')
+# 하단 링크로 넣은 것도 함께 제거
+foot = '\n      · <button class="up-link" onclick="downloadXlsx()">엑셀 내려받기</button>'
+assert foot in s, '하단 엑셀 내려받기 링크를 찾지 못함'
+s = s.replace(foot, '')
 assert '엑셀 내려받기</button>' not in s, '게시본에 엑셀 내려받기 버튼이 남아 있음'
 
 import sys; open(sys.argv[1], 'w', encoding='utf-8').write(s)
