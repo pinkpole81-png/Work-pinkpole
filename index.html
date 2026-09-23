@@ -67,6 +67,9 @@ body{background:var(--page);color:var(--ink);font-size:15px;line-height:1.55;
 .tab-aw::before{content:"";position:absolute;left:6px;top:50%;width:1px;height:16px;
   margin-top:-8px;background:var(--line)}
 .tab-aw.on{color:#fff}
+.tab-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-left:5px;
+  vertical-align:middle;background:var(--slate-l)}
+.tab-aw.on .tab-dot{background:rgba(255,255,255,.75)}
 .tab.first{margin-right:8px;padding-right:14px;border-right:1px solid var(--line);border-radius:9px 0 0 9px}
 .tab.first.on{border-right-color:transparent;border-radius:9px}
 
@@ -247,12 +250,6 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
   background:linear-gradient(180deg,#FFFBF7 0%,var(--card) 42%);
   box-shadow:0 1px 2px rgba(25,28,39,.05), 0 16px 40px -20px rgba(243,115,33,.30)}
 .hero-top{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:6px}
-.hero-figs{display:flex;gap:30px;flex-wrap:wrap}
-.hero-figs .hf-l{display:block;font-size:12.5px;color:var(--slate);font-weight:600;margin-bottom:3px}
-.hero-figs b{font-size:28px;font-weight:700;letter-spacing:-1.1px;line-height:1;
-  font-variant-numeric:tabular-nums}
-.hero-figs b i{font-size:13px;font-weight:600;color:var(--slate-l);font-style:normal;margin-left:2px}
-.hero-figs div:first-child b{color:var(--hw-deep)}
 .hero-top .legend{margin-left:auto;padding-bottom:4px}
 .stat-row{display:flex;justify-content:space-between;padding:11px 0;
   border-bottom:1px solid var(--line-2);font-size:14px}
@@ -282,7 +279,7 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
   .topbar-in,.tabbar-in{padding-left:14px;padding-right:14px}
   .topbar h1{padding-left:0;border-left:0;font-size:16.5px;width:100%}
   .topbar-right{margin-left:0;width:100%}
-  .hero-top{gap:14px}.hero-figs{gap:20px}.hero-figs b{font-size:24px}
+  .hero-top{gap:14px}
   .hero-top .legend{margin-left:0}
   .hero-chart{padding:18px 14px 8px}
   .card-pad{padding:16px 15px}
@@ -1982,9 +1979,6 @@ function viewMain(){
       <span class="right">그래프의 월을 클릭하면 해당 월 엑셀 상세가 열립니다</span></div>
     <div class="card hero-chart">
       <div class="hero-top">
-        <div class="hero-figs">
-          <div><span class="hf-l">${span} 누적 동의</span><b>${nf(all.agr)}<i>건</i></b></div>
-        </div>
         <div class="legend">
           <span><i style="background:linear-gradient(180deg,#FFC08A,#FF9A4D)"></i>월 동의건수</span>
           <span><i style="background:linear-gradient(180deg,#FF8A33,#E85E10)"></i>최고 실적월</span>
@@ -2209,10 +2203,31 @@ function viewAward(){
           border:1px solid var(--line);border-radius:8px" onclick="go('main')">← 대시보드</button>
       </span></div>`;
 
-  if(!rows.length) return head + `<div class="card"><div class="emptybox">
-    시상 자료가 아직 입력되지 않았습니다.<br>
-    <span class="mute" style="font-size:12.5px">화면 맨 아래 <b>[주차 데이터 갱신]</b> 에서
-    시상 엑셀을 올리면 이 화면에 표시됩니다.</span></div></div></div>`;
+  if(!rows.length) return head + `
+    <div class="notice"><span>✎</span><div>
+      <b>시상 자료 입력 대기</b> — 아직 올린 시상 자료가 없습니다.
+      아래 순서대로 엑셀을 올리면 이 화면에 시상 내역이 표시됩니다.</div></div>
+    <div class="card card-pad">
+      <div class="up-step"><span class="up-no">1</span><div>
+        <b>시상 엑셀을 준비합니다</b>
+        <div class="hint" style="margin:2px 0 0">아래 7개 열이 있으면 됩니다.
+          열 순서나 시트 이름은 달라도 괜찮습니다.</div></div></div>
+      <div class="tbl-scroll" style="margin:10px 0 18px">
+        <table><thead><tr><th class="l">센터</th><th class="l">팀</th><th class="l">사번</th>
+          <th class="l">상담사명</th><th>동의누적</th><th>H-POINT</th><th>인센티브</th></tr></thead>
+        <tbody><tr><td class="l mute">청주</td><td class="l mute">청주1팀</td>
+          <td class="l mute">8012345</td><td class="l mute">홍길동</td>
+          <td class="mute">54</td><td class="mute">1000</td><td class="mute">37800</td></tr></tbody></table>
+      </div>
+      <div class="up-step"><span class="up-no">2</span><div>
+        <b>[주차 데이터 갱신] 화면의 2번 칸에 올립니다</b>
+        <div class="hint" style="margin:2px 0 0">시상 엑셀만 올려도 됩니다.
+          기존 주간 실적은 그대로 유지됩니다.</div></div></div>
+      <div class="up-act">
+        <button class="foot-btn primary" onclick="go('update')">주차 데이터 갱신 화면으로</button>
+      </div>
+    </div>
+  </div>`;
 
   const sum=(i)=>rows.reduce((a,r)=>a+(r[i]||0),0);
   const tAgr=sum(4), tHp=sum(5), tInc=sum(6);
@@ -2377,8 +2392,9 @@ function renderTabs(){
   $('#tabs').innerHTML = `<button class="tab on first" data-v="main" onclick="go('main')">대시보드</button>`
     + M.map(m=>`<button class="tab" data-v="${m.m}" onclick="go(${m.m})">${m.m}월</button>`).join('')
     + `<button class="tab" data-v="sep" onclick="go('sep')">${SEP().m}월</button>`
-    + (AW().length ? `<button class="tab tab-aw" data-v="award" onclick="go('award')">`
-        + `${esc((DATA.award&&DATA.award.label)||'9월 시상')}</button>` : '');
+    + `<button class="tab tab-aw" data-v="award" onclick="go('award')">`
+      + `${esc((DATA.award&&DATA.award.label)||'9월 시상')}`
+      + `${AW().length ? '' : '<span class="tab-dot" title="자료 입력 대기"></span>'}</button>`;
 }
 
 /* ================================ 헤더 · 하단 표기 ================================ */
