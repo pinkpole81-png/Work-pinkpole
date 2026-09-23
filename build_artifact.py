@@ -24,7 +24,7 @@ s = s2
 assert re.search(r'maskPII:\s*false', s) is None, '게시본에 마스킹 해제가 남아 있음'
 # 게시본(웹 링크)은 보기 전용이므로 갱신 도구 진입 링크를 뺀다.
 # 코드 자체는 남지만 화면에서 들어갈 방법이 없다.
-link = ('\n      · <button class="up-link" onclick="go(\'update\')">주차 데이터 갱신</button>')
+link = ('\n        <button class="foot-btn primary" onclick="go(\'update\')">주차 데이터 갱신</button>')
 assert link in s, '갱신 링크를 찾지 못함'
 s = s.replace(link, '')
 assert '주차 데이터 갱신</button>' not in s, '게시본에 갱신 링크가 남아 있음'
@@ -38,7 +38,7 @@ n = s.count(btn)
 assert n == 2, f'엑셀 내려받기 버튼을 2개 찾지 못함 (찾은 수: {n})'
 s = s.replace(btn, '')
 # 하단 링크로 넣은 것도 함께 제거
-foot = '\n      · <button class="up-link" onclick="downloadXlsx()">엑셀 내려받기</button>'
+foot = '\n        <button class="foot-btn" onclick="downloadXlsx()">엑셀 내려받기</button>'
 assert foot in s, '하단 엑셀 내려받기 링크를 찾지 못함'
 s = s.replace(foot, '')
 assert '엑셀 내려받기</button>' not in s, '게시본에 엑셀 내려받기 버튼이 남아 있음'

@@ -203,9 +203,17 @@ tr.clickable:hover{background:var(--hw-wash)}
 .up-fold{margin-top:16px;border-top:1px solid var(--line-2);padding-top:12px}
 .up-fold summary{cursor:pointer;font-size:12.5px;color:var(--slate);font-weight:700}
 .up-fold summary:hover{color:var(--hw-deep)}
-.up-link{background:none;border:0;padding:0;font:inherit;color:var(--slate);cursor:pointer;
-  text-decoration:underline;text-underline-offset:3px}
-.up-link:hover{color:var(--hw-deep)}
+/* 하단 실행 버튼 — 주차 갱신 · 엑셀 내려받기 */
+.foot-r{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.foot-btns{display:flex;gap:8px;flex-wrap:wrap}
+.foot-btn{appearance:none;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+  padding:8px 15px;border-radius:9px;border:1px solid var(--line);background:#fff;
+  color:var(--slate);white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
+.foot-btn:hover{color:var(--hw-deep);border-color:var(--hw-pale);background:var(--hw-wash)}
+.foot-btn:focus-visible{outline:2px solid var(--hw);outline-offset:1px}
+.foot-btn.primary{background:var(--hw);border-color:var(--hw);color:#fff}
+.foot-btn.primary:hover{background:var(--hw-deep);border-color:var(--hw-deep);color:#fff}
+@media (max-width:640px){.foot-r{width:100%;justify-content:space-between}}
 .foot{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;
   color:var(--slate-l);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .nojs{background:var(--tile);border:1px solid var(--tile-line);border-top:3px solid var(--hw);
@@ -318,9 +326,11 @@ svg .hit:hover{fill:rgba(243,115,33,.06)}
   </noscript>
   <main id="view"></main>
   <div class="foot"><div id="footL"></div>
-    <div>한화손보 고객상담파트 내부보고용
-      · <button class="up-link" onclick="downloadXlsx()">엑셀 내려받기</button>
-      · <button class="up-link" onclick="go('update')">주차 데이터 갱신</button></div></div>
+    <div class="foot-r"><span>한화손보 고객상담파트 내부보고용</span>
+      <span class="foot-btns">
+        <button class="foot-btn" onclick="downloadXlsx()">엑셀 내려받기</button>
+        <button class="foot-btn primary" onclick="go('update')">주차 데이터 갱신</button>
+      </span></div></div>
 </div>
 
 <script>
