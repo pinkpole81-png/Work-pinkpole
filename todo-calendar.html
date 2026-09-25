@@ -311,6 +311,7 @@ kbd{font:11px ui-monospace,Consolas,monospace;border:1px solid var(--line);borde
         <button class="ib" id="rNext" title="다음 주">›</button>
         <div class="spacer"></div>
         <label class="tog"><input type="checkbox" id="rRep">반복 업무 포함</label>
+        <label class="tog"><input type="checkbox" id="rMeal">식사 일정 포함</label>
         <label class="tog"><input type="checkbox" id="rMemo">메모 포함</label>
       </div>
       <textarea class="report" id="rText" spellcheck="false"></textarea>
@@ -357,9 +358,11 @@ kbd{font:11px ui-monospace,Consolas,monospace;border:1px solid var(--line);borde
 const KEY = 'workCalendar.v1';
 const CATS = [
   ['work','업무','#F37321'], ['meet','회의','#2F6FDE'], ['report','보고','#7C4DDB'],
-  ['due','마감','#D63B3B'],  ['edu','교육','#1F9D74'],  ['etc','기타','#7A85A3']
+  ['due','마감','#D63B3B'],  ['edu','교육','#1F9D74'],
+  ['lunch','점심','#D99A00'], ['dinner','저녁식사','#B5487A'], ['etc','기타','#7A85A3']
 ];
 const CAT = {}; CATS.forEach(([k,n,c]) => CAT[k] = {n, c});
+const MEAL = new Set(['lunch', 'dinner']);   // 식사 : 기한 지남 목록 제외, 주간 보고 기본 제외
 const PRI = { high:{n:'긴급', o:0}, mid:{n:'보통', o:1}, low:{n:'낮음', o:2} };
 const REP = { none:'반복 안 함', daily:'매일', weekday:'평일 (공휴일 제외)', weekly:'매주 같은 요일', monthly:'매월 같은 날' };
 const REP_SHORT = { daily:'매일', weekday:'평일', weekly:'매주', monthly:'매월' };
@@ -455,7 +458,7 @@ function matches(t) {
 }
 function overdueList() {
   const td = todayS();
-  return S.tasks.filter(t => !isRep(t) && !t.done && t.date < td).sort((a, b) => a.date < b.date ? -1 : 1);
+  return S.tasks.filter(t => !isRep(t) && !t.done && t.date < td && !MEAL.has(t.cat)).sort((a, b) => a.date < b.date ? -1 : 1);
 }
 
 /* ───────────── 화면 상태 ───────────── */
@@ -750,7 +753,7 @@ function quickAdd(text) {
     if (m[3] && +m[3] < 24) { const e = pad(+m[3]) + ':' + pad(+(m[4] || 0)); if (e > t.time) t.end = e; }
     s = s.replace(m[0], ' ');
   }
-  s = s.replace(/#(\S+)/g, (_, w) => { const c = CATS.find(c => c[1] === w || c[0] === w.toLowerCase()); if (c) { t.cat = c[0]; return ' '; } return _; });
+  s = s.replace(/#(\S+)/g, (_, w) => { const c = CATS.find(c => c[1] === w || c[0] === w.toLowerCase()) || (w.length >= 2 && CATS.find(c => c[1].startsWith(w))); if (c) { t.cat = c[0]; return ' '; } return _; });
   if (/(^|\s)!+(?=\s|$)/.test(s)) { t.pri = 'high'; s = s.replace(/(^|\s)!+(?=\s|$)/g, ' '); }
   t.title = s.replace(/\s+/g, ' ').trim();
   if (!t.title) { toast('업무명을 입력하세요'); return; }
@@ -781,14 +784,14 @@ let rMon = null;
 function mondayOf(d) { const w = P(d).getDay(); return addD(d, -((w + 6) % 7)); }
 function buildReport() {
   const mon = rMon, sun = addD(mon, 6), nMon = addD(mon, 7), nSun = addD(mon, 13);
-  const incRep = $('#rRep').checked, incMemo = $('#rMemo').checked;
+  const incRep = $('#rRep').checked, incMemo = $('#rMemo').checked, incMeal = $('#rMeal').checked;
   const line = it => {
     const t = it.t;
     let s = ' - ' + mdShort(it.d) + ' ' + (t.time ? t.time + ' ' : '') + t.title + ' [' + CAT[t.cat || 'work'].n + ']' + (t.pri === 'high' ? ' (긴급)' : '');
     if (incMemo && t.memo) s += '\n     · ' + t.memo.replace(/\n/g, '\n     · ');
     return s;
   };
-  const range = (a, b) => { const out = []; for (let d = a; d <= b; d = addD(d, 1)) dayItems(d).forEach(x => { if (incRep || !isRep(x.t)) out.push(x); }); return out; };
+  const range = (a, b) => { const out = []; for (let d = a; d <= b; d = addD(d, 1)) dayItems(d).forEach(x => { if ((incRep || !isRep(x.t)) && (incMeal || !MEAL.has(x.t.cat))) out.push(x); }); return out; };
   const cur = range(mon, sun), nxt = range(nMon, nSun);
   const done = cur.filter(x => x.done), open = cur.filter(x => !x.done);
   const fmt = s => s.replace(/-/g, '.');
@@ -1003,7 +1006,7 @@ function bind() {
   /* 주간 보고 */
   $('#rPrev').onclick = () => { rMon = addD(rMon, -7); buildReport(); };
   $('#rNext').onclick = () => { rMon = addD(rMon, 7); buildReport(); };
-  $('#rRep').onchange = buildReport; $('#rMemo').onchange = buildReport;
+  $('#rRep').onchange = buildReport; $('#rMemo').onchange = buildReport; $('#rMeal').onchange = buildReport;
   $('#rCopy').onclick = () => copyText($('#rText').value);
 
   /* 설정 */
