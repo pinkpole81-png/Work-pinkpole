@@ -192,6 +192,8 @@ tr.clickable:hover{background:var(--hw-wash)}
 .up-chk{display:flex;gap:9px;align-items:flex-start;font-size:13px;margin-top:7px;line-height:1.5}
 .up-chk>span{flex:none;font-weight:800}
 .up-chk.y>span{color:#2E7D4F} .up-chk.n>span{color:#C0392B}
+.up-chk.w>span{color:#B08214;font-weight:800}
+.up-chk.w>div{color:#7A5A0E}
 .up-weeks{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
 .up-weeks>div{background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:8px 12px;
   font-size:12.5px;display:flex;gap:8px;align-items:baseline}
@@ -1715,6 +1717,14 @@ const AWN   = () => MN(AWM()) + ' 시상';
 /* 완료된 월(엑셀 원본 1~8월) 중 마지막 — 시도·동의율 기준 표기에 쓴다 */
 const MSPAN = () => '1~' + MN(M[M.length-1].m);
 const findAuto = m => DONE().filter(x=>x.m===Number(m))[0] || null;
+/* 현재 자율참여 월에 실제 실적이 들어왔는지.
+   시상 탭과 같은 규칙으로, 엑셀이 반영되기 전에는 그 달 탭을 띄우지 않는다. */
+const sepHas = () => {
+  const S = SEP();
+  return (S.weeks||[]).some(w=>(w.agr||0)>0)
+      || (S.list||[]).length>0
+      || (S.roster||[]).some(r=>(r[5]||0)>0);
+};
 const BASE = () => (sampleOn && DATA.sampleSep.baseDate) ? DATA.sampleSep.baseDate : DATA.meta.baseDate;
 
 /* ---- 인센티브 : 구간 도달 시 전건 적용, 1인 월 상한 ---- */
@@ -2438,7 +2448,9 @@ function renderTabs(){
     + M.map(m=>`<button class="tab" data-v="${m.m}" onclick="go(${m.m})">${m.m}월</button>`).join('')
     + DONE().map(a=>`<button class="tab" data-v="auto:${a.m}" onclick="go('auto:${a.m}')">`
         + `${MN(a.m)}</button>`).join('')
-    + `<button class="tab" data-v="sep" onclick="go('sep')">${SEPN()}</button>`
+    + (sepHas()
+        ? `<button class="tab" data-v="sep" onclick="go('sep')">${SEPN()}</button>`
+        : '')
     + (AW().length
         ? `<button class="tab tab-aw" data-v="award" onclick="go('award')">`
           + `${esc(AWN())}</button>`
@@ -2938,7 +2950,8 @@ async function upPickAward(input){
 
 function upRun(){
   UP.msg=[]; UP.ok=false; UP.roster=UP.list=UP.weeks=null;
-  const add=(ok,t)=>UP.msg.push({ok,t});
+  /* warn=true 는 알려만 주고 저장을 막지 않는다 */
+  const add=(ok,t,warn)=>UP.msg.push({ok,t,warn});
   try{
     const rRows = UP.rows.roster || tsvRows(($('#upRoster')||{}).value||'');
     const lRows = UP.rows.list   || tsvRows(($('#upList')||{}).value||'');
@@ -2989,9 +3002,14 @@ function upRun(){
     if(UP.award){
       const ids=new Set(UP.roster.map(r=>r[2]));
       const miss=UP.award.filter(r=>!ids.has(r[2]));
-      add(!miss.length, miss.length
-        ? `시상 명단에 참여자 명단에 없는 사번 ${miss.length}명 (예: ${miss.slice(0,3).map(r=>r[3]).join(', ')})`
-        : '시상 명단 사번이 모두 참여자 명단에 있음');
+      /* 사번은 달이 바뀌며 변경될 수 있으므로 막지 않고 알려만 준다.
+         시상 자료는 별도 결재 결과라 원본을 그대로 신뢰한다. */
+      if(miss.length)
+        add(true, `시상 명단 중 ${miss.length}명은 이번 달 참여자 명단에 없습니다`
+          + ` (예: ${miss.slice(0,3).map(r=>r[3]).join(', ')}). 사번이 바뀌었거나 지난 달 대상자일 수 있습니다.`
+          + ` 시상 자료는 올린 그대로 반영됩니다.`, true);
+      else
+        add(true, '시상 명단 사번이 모두 참여자 명단에 있음');
     }
 
     const ds=UP.list.map(r=>r[1]).filter(Boolean).sort();
@@ -3008,8 +3026,8 @@ function upRun(){
 
 function upResultHtml(){
   if(!UP.msg.length) return '';
-  const rows=UP.msg.map(m=>`<div class="up-chk ${m.ok?'y':'n'}">
-    <span>${m.ok?'✓':'✕'}</span><div>${esc(m.t)}</div></div>`).join('');
+  const rows=UP.msg.map(m=>`<div class="up-chk ${m.warn?'w':(m.ok?'y':'n')}">
+    <span>${m.warn?'!':(m.ok?'✓':'✕')}</span><div>${esc(m.t)}</div></div>`).join('');
   const wk = UP.weeks ? `<div class="hint" style="margin-top:13px">주차 기간은 동의 날짜에서 계산한 값입니다.
       실제 운영 주차와 다르면 아래에서 고칠 수 있습니다.</div>
     <div class="up-weeks">${UP.weeks.map((w,i)=>
@@ -3018,7 +3036,9 @@ function upResultHtml(){
           aria-label="${esc(w.label)} 기간">
         <i>${nf(w.agr)}건</i></div>`).join('')}</div>` : '';
   return `<div class="up-box ${UP.ok?'ok':'bad'}">
-    <div class="ctitle">${UP.ok?'검증 통과':'확인이 필요합니다'}</div>
+    <div class="ctitle">${UP.ok
+      ? (UP.msg.some(m=>m.warn) ? '검증 통과 (확인할 점 있음)' : '검증 통과')
+      : '확인이 필요합니다'}</div>
     ${rows}${wk}
     ${UP.ok?`<div class="up-act">
       <button class="tab up-btn" onclick="upApply()">대시보드에서 보기</button>
