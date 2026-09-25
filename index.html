@@ -358,7 +358,7 @@ const DATA = {
     owner    : "고객상담파트"
   },
 
-  /* 인센티브 기준 (9월 자율참여부터 적용) — 구간 도달 시 전 건수에 해당 단가 적용 */
+  /* 인센티브 기준 (자율참여 시작월부터 적용) — 구간 도달 시 전 건수에 해당 단가 적용 */
   incentive: {
     cap: 150000,                                  // 1인 월 상한
     hpoint: 1000,                                 // 전 구간 대상자 H-Point 지급 점수
@@ -733,11 +733,12 @@ const DATA = {
         ["대구","대구3팀","8093395","김민정1",141,14]
       ] }
   ],
-  /* ===== 9월~ : 자율참여 (목표 없음 · 건수에 따른 인센티브만) ===== */
+  /* ===== 현재 자율참여 월 (목표 없음 · 건수에 따른 인센티브만) =====
+     m 만 바꾸면 화면 문구가 전부 따라간다. 지난 달은 autoDone 으로 옮겨진다. */
   sep: {
     m: 9,
     /* ② 주간 실적 — 매주 한 줄씩 추가
-       9월부터 시도건수·동의율은 추출하지 않으므로 동의건수(agr)만 입력한다 */
+       자율참여 월부터 시도건수·동의율은 추출하지 않으므로 동의건수(agr)만 입력한다 */
     weeks: [
       { label:"1주차", range:"9/01~9/04", agr:263 },
       { label:"2주차", range:"9/07~9/11", agr:184 },
@@ -1600,11 +1601,18 @@ const DATA = {
     ]
   },
 
-  /* ===== 9월 시상 — 갱신 화면에서 엑셀을 올리면 채워진다 =====
+  /* ===== 지난 자율참여 월 보관 =====
+     새 달 자료를 올리면 그때까지의 sep 이 통째로 여기에 쌓인다.
+     각 항목 : { m, baseDate, weeks, roster, list, award }
+     덕분에 10월을 반영해도 9월 탭·상세가 그대로 남는다. */
+  autoDone: [
+  ],
+
+  /* ===== 시상 — 갱신 화면에서 엑셀을 올리면 채워진다 =====
      형식 : ["센터","팀","사번","상담사명", 동의누적, H-Point, 인센티브]
      비어 있으면 시상 탭이 나타나지 않는다. */
   award: {
-    label: "9월 시상",
+    m: 0,                 /* 0 이면 현재 자율참여 월(sep.m)을 따른다 */
     baseDate: "",
     rows: [
     ]
@@ -1696,15 +1704,27 @@ const CO = ['청주','서울','대구'];
 const M = DATA.months, INC = DATA.incentive;
 let sampleOn = !!DATA.sampleMode;
 const SEP  = () => sampleOn ? DATA.sampleSep : DATA.sep;
+/* 자율참여(목표 없음 · 인센티브 적용) 시작 월. 규칙이 바뀌지 않는 한 고정값 */
+const AUTO0 = 9;
+const DONE  = () => (DATA.autoDone||[]);
+/* 화면 문구는 모두 데이터의 월을 따라간다 — 10월, 11월도 그대로 동작한다 */
+const MN    = m => m + '월';
+const SEPN  = () => MN(SEP().m);
+const AWM   = () => (DATA.award && DATA.award.m) || SEP().m;
+const AWN   = () => MN(AWM()) + ' 시상';
+/* 완료된 월(엑셀 원본 1~8월) 중 마지막 — 시도·동의율 기준 표기에 쓴다 */
+const MSPAN = () => '1~' + MN(M[M.length-1].m);
+const findAuto = m => DONE().filter(x=>x.m===Number(m))[0] || null;
 const BASE = () => (sampleOn && DATA.sampleSep.baseDate) ? DATA.sampleSep.baseDate : DATA.meta.baseDate;
 
 /* ---- 인센티브 : 구간 도달 시 전건 적용, 1인 월 상한 ---- */
 function tierOf(n){ let t=null; for(const x of INC.tiers) if(n>=x.min) t=x; return t; }
 function calcInc(n){ const t=tierOf(n); return t ? Math.min(n*t.rate, INC.cap) : 0; }
 
-/* ---- 9월 집계 ---- */
-function sepData(){
-  const roster = SEP().roster.map(r=>{
+/* ---- 자율참여 월 집계. src 를 주면 보관된 월도 같은 방식으로 계산한다 ---- */
+function sepData(src){
+  const S0 = src || SEP();
+  const roster = (S0.roster||[]).map(r=>{
     const agr = r[5]||0, join = !!r[4];
     return {center:r[0], team:r[1], id:r[2], name:r[3], join, agr,
             inc: join?calcInc(agr):0, tier: join?tierOf(agr):null};
@@ -1720,7 +1740,7 @@ function sepData(){
     agr: joined.reduce((a,r)=>a+r.agr,0),
     inc: joined.reduce((a,r)=>a+r.inc,0),
     ach: joined.filter(r=>r.inc>0).length,
-    weeks: SEP().weeks||[]};
+    weeks: S0.weeks||[], m: S0.m, baseDate: S0.baseDate||''};
 }
 
 /* ================================ 차트 ================================ */
@@ -1792,7 +1812,7 @@ function barChart(items, opt={}){
     if(d.l2) s+=`<text x="${x(i)}" y="${H-(opt.fluid?7*F:2)}" text-anchor="middle" font-size="${11*F}"
          fill="#626C89">${esc(d.l2)}</text>`;
   });
-  /* 동의율은 값이 있는 항목만 그린다. 9월부터는 시도건수를 추출하지 않아
+  /* 동의율은 값이 있는 항목만 그린다. 자율참여 월부터는 시도건수를 추출하지 않아
      동의율이 없으므로, 0% 로 찍히지 않도록 해당 항목을 선에서 제외한다 */
   const pl = opt.line ? items.map((d,i)=>({i, r:d.r})).filter(p=>typeof p.r==='number') : [];
   if(pl.length){
@@ -1813,7 +1833,7 @@ function barChart(items, opt={}){
   if(opt.click){                                   /* 막대 영역 클릭 → 해당 월 상세 */
     items.forEach((d,i)=>{
       if(d.k==null || d.k===undefined) return;
-      /* 월 탭은 숫자, 9월은 'sep' 문자열이라 인자를 형태에 맞게 감싼다 */
+      /* 월 탭은 숫자, 자율참여 월은 문자열 키라 인자를 형태에 맞게 감싼다 */
       const arg = typeof d.k === 'number' ? d.k : `'${d.k}'`;
       s+=`<rect class="hit" x="${PL+cw*i}" y="${PT-10}" width="${cw}" height="${ih+PB}" rx="6"
            onclick="${opt.click}(${arg})"><title>${esc(d.l)} 상세 보기</title></rect>`;
@@ -1901,11 +1921,15 @@ function viewMain(){
   const S = sepData();
   const wAgr = S.weeks.reduce((a,w)=>a+(w.agr||0),0);
   const empty = S.agr===0 && wAgr===0;
-  /* 9월 실적이 들어오면 누계에 포함 (9월은 집계 중이므로 차트·안내에 그 사실을 표기) */
+  /* 현재 자율참여 월 실적이 들어오면 누계에 포함 (집계 중임을 차트·안내에 표기) */
   const hasSep = !empty;
-  /* 동의 누계는 9월을 포함 (시도·동의율은 9월부터 추출하지 않아 화면에서 제외) */
-  const all = {agr: tot.agr + (hasSep?wAgr:0)};
-  const span = hasSep ? `1~${SEP().m}월` : '1~'+M[M.length-1].m+'월';
+  /* 동의 누계는 자율참여 월을 포함 (시도·동의율은 그 달부터 추출하지 않음) */
+  /* 완료된 자율참여 월(보관) 합계 */
+  const doneSum = DONE().map(a=>({m:a.m, agr:sepData(a).agr}));
+  const doneAgr = doneSum.reduce((x,d)=>x+d.agr,0);
+  const all = {agr: tot.agr + doneAgr + (hasSep?wAgr:0)};
+  const lastM = hasSep ? SEP().m : (doneSum.length ? doneSum[doneSum.length-1].m : M[M.length-1].m);
+  const span = '1~' + MN(lastM);
 
   /* 구간별 인원 / 금액 */
   const tiers = INC.tiers.map((t,i)=>{
@@ -1915,32 +1939,33 @@ function viewMain(){
   });
   const under = S.joined.filter(r=>r.agr < INC.tiers[0].min).length;
 
-  /* 월별 차트 : 1~8월(완료) + 9월(집계중). 9월은 실적이 들어온 뒤에만 표시 */
+  /* 월별 차트 : 엑셀 원본 월 + 완료된 자율참여 월 + 집계중인 현재 월 */
   const chartMonths = M.map(m=>({k:m.m, l:m.m+'월', l2:'시도 '+nf(m.att), v:m.agr,
     r:m.att?m.agr/m.att:0, hi:m.m===best.m}));
+  doneSum.forEach(d=>chartMonths.push({k:'auto:'+d.m, l:MN(d.m), v:d.agr}));
   const sepInChart = wAgr>0;
-  /* 9월은 동의건수만 집계하므로 l2(시도)·r(동의율) 을 넣지 않는다 */
+  /* 자율참여 월은 동의건수만 집계하므로 l2(시도)·r(동의율) 을 넣지 않는다 */
   if(sepInChart) chartMonths.push({k:'sep', l:SEP().m+'월', v:wAgr, partial:true});
 
   return `
   ${sampleOn?`<div class="notice sample" style="margin-top:20px"><span>⚑</span><div>
-    <b>샘플 데이터 (테스트용)</b> — 지금 보이는 9월 수치는 <b>실제 실적이 아닌 가상 데이터</b>입니다.
+    <b>샘플 데이터 (테스트용)</b> — 지금 보이는 ${SEPN()} 수치는 <b>실제 실적이 아닌 가상 데이터</b>입니다.
     화면 우상단 <b>[샘플]</b> 버튼으로 실제 데이터 화면과 전환할 수 있고,
     파일 상단 <code>sampleMode: false</code> 로 바꾸면 영구히 해제됩니다.</div></div>`
    : empty?`<div class="notice" style="margin-top:20px"><span>✎</span><div>
-    <b>9월 실적 입력 대기</b> — 파일 상단 <b>DATA</b> 영역의 <code>sep.weeks</code>(주간 실적)와
+    <b>${SEPN()} 실적 입력 대기</b> — 파일 상단 <b>DATA</b> 영역의 <code>sep.weeks</code>(주간 실적)와
     <code>sep.roster</code>(상담사별 동의건수)를 입력하시면 아래 주간 실적 · 인센티브가
     모두 자동 계산됩니다. 현재 참여자 명단 ${nf(S.roster.length)}명이 등록되어 있습니다.</div></div>`:''}
 
   <!-- ① 전체 동의 누적건수 -->
   <div class="sec">
-    <div class="sec-hd"><h2>전체 누적 실적</h2><span class="desc">2026년 1월 ~ ${hasSep?SEP().m:M[M.length-1].m}월${hasSep?' (9월 집계중)':''}</span>
+    <div class="sec-hd"><h2>전체 누적 실적</h2><span class="desc">2026년 1월 ~ ${hasSep?SEPN():MN(M[M.length-1].m)}${hasSep?` (${SEPN()} 집계중)`:''}</span>
       <span class="right">데이터 기준일 ${esc(BASE())}</span></div>
     <div class="grid top-row">
       <div class="card tile-bar card-pad">
-        <div class="ctitle">9월 참여율</div>
+        <div class="ctitle">${SEPN()} 참여율</div>
         ${empty ? `<div class="gauge-wrap">
-          ${gauge(0, 1, {sub:'집계 전', aria:'9월 자율참여율'})}
+          ${gauge(0, 1, {sub:'집계 전', aria:SEPN()+' 자율참여율'})}
           <div class="gauge-meta">
             <div><div class="kpi-l">참여 인원</div>
               <div style="font-size:22px;font-weight:700;letter-spacing:-.8px;margin-top:3px;color:var(--slate-l)">
@@ -1952,7 +1977,7 @@ function viewMain(){
         </div>
         <div class="hint">자율참여 신청이 확정되면 참여율이 표시됩니다.</div>`
         : `<div class="gauge-wrap">
-          ${gauge(S.joined.length, S.roster.length, {sub:'참여', aria:'9월 자율참여율'})}
+          ${gauge(S.joined.length, S.roster.length, {sub:'참여', aria:SEPN()+' 자율참여율'})}
           <div class="gauge-meta">
             <div><div class="kpi-l">참여 인원</div>
               <div style="font-size:22px;font-weight:700;letter-spacing:-.8px;margin-top:3px">
@@ -1964,8 +1989,8 @@ function viewMain(){
         </div>`}
       </div>
       ${kpi('전체 동의 누적건수', nf(all.agr), '건', `<span class="chip or">최고 ${best.m}월 ${nf(best.agr)}건</span>`, 'acc')}
-      ${empty ? kpi('9월 동의 (자율참여)', '—', '', '<span class="chip">데이터 입력 대기</span>', '')
-        : kpi('9월 동의 (자율참여)', nf(S.agr), '건',
+      ${empty ? kpi(SEPN()+' 동의 (자율참여)', '—', '', '<span class="chip">데이터 입력 대기</span>', '')
+        : kpi(SEPN()+' 동의 (자율참여)', nf(S.agr), '건',
             `인센티브 <b style="color:var(--hw-deep)">${won(S.inc)}</b>`, 'acc')}
     </div>
   </div>
@@ -1988,15 +2013,15 @@ function viewMain(){
          click:'go', aria:'월별 동의건수 및 동의율'})}
       ${sepInChart ? `<div class="hint" style="margin:0 0 12px;padding-top:10px;
         border-top:1px solid var(--line-2)">
-        9월은 <b>자율참여 전환</b> 이후 집계 중입니다 (${esc(BASE())} 기준 · 동의 ${nf(wAgr)}건).
-        9월부터는 <b>동의건수만 추출</b>하므로 시도건수·동의율은 집계하지 않습니다.
-        1~8월은 목표 부여 방식이라 월 전체 실적이며, 직접 비교에는 주의가 필요합니다.</div>` : ''}
+        ${SEPN()}은 <b>자율참여</b> 집계 중입니다 (${esc(BASE())} 기준 · 동의 ${nf(wAgr)}건).
+        ${MN(AUTO0)}부터는 <b>동의건수만 추출</b>하므로 시도건수·동의율은 집계하지 않습니다.
+        ${MSPAN()}은 목표 부여 방식이라 월 전체 실적이며, 직접 비교에는 주의가 필요합니다.</div>` : ''}
     </div>
   </div>
 
-  <!-- ③ 9월부터 주간 실적 -->
+  <!-- ③ 자율참여 주간 실적 -->
   <div class="sec">
-    <div class="sec-hd"><h2>주간 실적</h2><span class="desc">9월 자율참여 · 주차별</span>
+    <div class="sec-hd"><h2>주간 실적</h2><span class="desc">${SEPN()} 자율참여 · 주차별</span>
       <span class="right">누계 동의 ${nf(wAgr)}건</span></div>
     <div class="grid g-2">
       <div class="card card-pad">
@@ -2016,7 +2041,7 @@ function viewMain(){
 
   <!-- ④ 인센티브 기준 -->
   <div class="sec">
-    <div class="sec-hd"><h2>인센티브 기준</h2><span class="desc">9월 자율참여부터 적용</span></div>
+    <div class="sec-hd"><h2>인센티브 기준</h2><span class="desc">${MN(AUTO0)} 자율참여부터 적용</span></div>
     <div class="grid g-2" style="align-items:start">
       <div class="card card-pad">
         <div class="ctitle">구간별 인원 현황</div>
@@ -2041,7 +2066,7 @@ function viewMain(){
         <div class="stat-row"><span class="k">적용 방식</span><span class="v">구간 도달 시 전 건수에 단가 적용</span></div>
         <div class="stat-row"><span class="k">1인 월 상한</span><span class="v">${won(INC.cap)}</span></div>
         <div class="stat-row"><span class="k">목표</span><span class="v">없음 (자율참여)</span></div>
-        <div class="stat-row"><span class="k">적용 기간</span><span class="v">9월 ~</span></div>
+        <div class="stat-row"><span class="k">적용 기간</span><span class="v">${MN(AUTO0)} ~</span></div>
         <div class="hint">예시 · 53건 획득 → 2구간 도달 → 53건 × 700원 = ${won(53*700)}<br>
         예시 · 286건 획득 → 3구간 도달 → 286,000원이나 상한 적용으로 ${won(INC.cap)}</div>
         <div class="hpoint">※ 전 구간 대상자 H-Point ${nf(INC.hpoint||1000)}점 지급</div>
@@ -2050,8 +2075,8 @@ function viewMain(){
   </div>
 
   <div class="notice gray" style="margin-top:18px"><span>ℹ</span><div>
-    1~8월은 <b>시도 · 동의건수 별도 시상</b>으로 인센티브가 적용되지 않았으며,
-    인센티브는 <b>9월 자율참여부터</b> 별도로 산정됩니다.
+    ${MSPAN()}은 <b>시도 · 동의건수 별도 시상</b>으로 인센티브가 적용되지 않았으며,
+    인센티브는 <b>${MN(AUTO0)} 자율참여부터</b> 별도로 산정됩니다.
     1~2월은 시범 운영으로 상담사별 상세가 집계되지 않았습니다.</div>
   </div>`;
 }
@@ -2107,22 +2132,28 @@ function viewMonth(mm){
   </div>`;
 }
 
-/* ================================ 9월 상세 (자율참여) ================================ */
-function viewSepMonth(){
-  const S = sepData();
+/* ========================= 자율참여 월 상세 ========================= */
+function viewSepMonth(src){
+  const S = sepData(src);
+  const MLBL = MN(S.m);
+  /* 보관된 월이면 그 달 전용 경로를 쓴다 */
+  const RL = src ? 'autolist:'+S.m : 'seplist';
   const wAgr = S.weeks.reduce((a,w)=>a+(w.agr||0),0);
   const empty = S.agr===0 && wAgr===0;
 
   const head = `
   <div class="sec">
-    <div class="sec-hd"><h2>${SEP().m}월 실적</h2>
+    <div class="sec-hd"><h2>${MLBL} 실적</h2>
       <span class="desc">자율참여 · 목표 없음 · 획득 건수에 따른 인센티브만 적용</span>
       <span class="right" style="display:flex;gap:8px">
         <button class="tab" style="padding:4px 12px;font-size:12.5px;border:1px solid var(--hw-pale);
           border-radius:8px;background:var(--hw-wash);color:var(--hw-deep)"
-          onclick="go('seplist')">동의 리스트</button>
-        <button class="tab" style="padding:4px 12px;font-size:12.5px;
-          border:1px solid var(--line);border-radius:8px" onclick="downloadXlsx()">엑셀 내려받기</button>
+          onclick="go('${RL}')">동의 리스트</button>
+        ${(src && src.award && (src.award.rows||[]).length)?`<button class="tab"
+          style="padding:4px 12px;font-size:12.5px;border:1px solid var(--line);
+          border-radius:8px" onclick="go('award:${S.m}')">${MN(S.m)} 시상</button>`:''}
+        ${src?'':`<button class="tab" style="padding:4px 12px;font-size:12.5px;
+          border:1px solid var(--line);border-radius:8px" onclick="downloadXlsx()">엑셀 내려받기</button>`}
         <button class="tab" style="padding:4px 12px;font-size:12.5px;
           border:1px solid var(--line);border-radius:8px" onclick="go('main')">← 대시보드</button>
       </span></div>
@@ -2140,7 +2171,7 @@ function viewSepMonth(){
   const hasList = (SEP().list||[]).length>0;
   return head + `
   <div class="sec">
-    <div class="sec-hd"><h2>주차별 실적</h2><span class="desc">기준일 ${esc(BASE())}</span></div>
+    <div class="sec-hd"><h2>주차별 실적</h2><span class="desc">기준일 ${esc(S.baseDate||BASE())}</span></div>
     <div class="card"><div class="tbl-scroll">
       <table><thead><tr><th class="l">주차</th><th class="l">기간</th>
         <th>동의건수</th></tr></thead><tbody>
@@ -2167,7 +2198,7 @@ function viewSepMonth(){
       ${rows.map((r,i)=>{
         const linked = r.agr>0 && hasList;   /* 동의 내역이 있을 때만 리스트로 연결 */
         return `<tr data-s="${esc(r.name+' '+r.center+' '+r.team+' '+r.id)}"
-          ${linked?`class="clickable" onclick="go('seplist:${esc(r.id)}')"
+          ${linked?`class="clickable" onclick="go('${RL}:${esc(r.id)}')"
             title="${esc(r.name)} 상담사 동의 리스트 보기"`:''}>
         <td class="c">${r.agr>0?`<span class="rk ${i<3?'r'+(i+1):''}">${i+1}</span>`:'<span class="mute">-</span>'}</td>
         <td class="l"><span class="pill c${CO.indexOf(r.center)+1}">${esc(r.center)}</span></td>
@@ -2186,18 +2217,20 @@ function viewSepMonth(){
   </div>`;
 }
 
-/* ================================ 9월 시상 ================================ */
+/* ================================ 시상 ================================ */
 const AW = () => (DATA.award && DATA.award.rows) ? DATA.award.rows : [];
 
-function viewAward(){
-  const rows=AW();
+function viewAward(src){
+  const rows = src ? (src.rows||[]) : AW();
+  const lbl  = MN(src ? src.m : AWM()) + ' 시상';
   const head=`
   <div class="sec">
-    <div class="sec-hd"><h2>${esc((DATA.award&&DATA.award.label)||'9월 시상')}</h2>
+    <div class="sec-hd"><h2>${esc(lbl)}</h2>
       <span class="desc">자율참여 실적에 따른 시상 내역</span>
       <span class="right" style="display:flex;gap:8px">
         <button class="tab" style="padding:4px 12px;font-size:12.5px;
-          border:1px solid var(--line);border-radius:8px" onclick="go('main')">← 대시보드</button>
+          border:1px solid var(--line);border-radius:8px"
+          onclick="go(${src?`'auto:${src.m}'`:`'main'`})">← ${src?MN(src.m)+' 실적':'대시보드'}</button>
       </span></div>`;
 
   if(!rows.length) return head + `
@@ -2271,28 +2304,31 @@ function viewAward(){
 /* 고객 식별정보는 기본 마스킹. DATA.sep.maskPII 로 제어 */
 function maskCust(v){ v=String(v||''); return v.length>4 ? '…'+v.slice(-4) : v; }
 
-function viewSepList(empId){
-  const ALL = (SEP().list||[]).map(r=>({wk:r[0], date:r[1], id:r[2], name:r[3], cust:r[4]}));
+function viewSepList(empId, src){
+  const S0 = src || SEP();
+  const RL = src ? 'autolist:'+S0.m : 'seplist';
+  const RM = src ? 'auto:'+S0.m : 'sep';
+  const ALL = (S0.list||[]).map(r=>({wk:r[0], date:r[1], id:r[2], name:r[3], cust:r[4]}));
   const L = empId ? ALL.filter(r=>r.id===String(empId)) : ALL;
   const who = empId ? (L[0] || ALL.find(r=>r.id===String(empId))) : null;
   const whoName = who ? who.name
-    : (empId ? ((SEP().roster||[]).filter(r=>r[2]===String(empId))[0]||[])[3] || '' : '');
-  const mask = SEP().maskPII !== false;
+    : (empId ? ((S0.roster||[]).filter(r=>r[2]===String(empId))[0]||[])[3] || '' : '');
+  const mask = SEP().maskPII !== false;  /* 마스킹 규칙은 전 월 공통 */
 
   const head = `
   <div class="sec">
-    <div class="sec-hd"><h2>${SEP().m}월 동의 리스트</h2>
+    <div class="sec-hd"><h2>${MN(S0.m)} 동의 리스트</h2>
       <span class="desc">${empId
         ? `<b style="color:var(--hw-deep)">${esc(whoName)}</b> 상담사 · 사번 ${esc(empId)}`
-        : `엑셀 동의List · 기준일 ${esc(BASE())}`}</span>
+        : `엑셀 동의List · 기준일 ${esc(S0.baseDate||BASE())}`}</span>
       <span class="right" style="display:flex;gap:8px">
         ${empId?`<button class="tab" style="padding:4px 12px;font-size:12.5px;
           border:1px solid var(--hw-pale);border-radius:8px;background:var(--hw-wash);
-          color:var(--hw-deep)" onclick="go('seplist')">전체 리스트</button>`:''}
+          color:var(--hw-deep)" onclick="go('${RL}')">전체 리스트</button>`:''}
+        ${src?'':`<button class="tab" style="padding:4px 12px;font-size:12.5px;
+          border:1px solid var(--line);border-radius:8px" onclick="downloadXlsx()">엑셀 내려받기</button>`}
         <button class="tab" style="padding:4px 12px;font-size:12.5px;
-          border:1px solid var(--line);border-radius:8px" onclick="downloadXlsx()">엑셀 내려받기</button>
-        <button class="tab" style="padding:4px 12px;font-size:12.5px;
-          border:1px solid var(--line);border-radius:8px" onclick="go('sep')">← ${SEP().m}월 실적</button>
+          border:1px solid var(--line);border-radius:8px" onclick="go('${RM}')">← ${MN(S0.m)} 실적</button>
       </span></div>`;
 
   if(!L.length) return head + `<div class="card"><div class="emptybox">
@@ -2361,14 +2397,26 @@ function filterRows(inp){
 }
 function go(v){
   const vs = String(v);
-  /* 리스트 화면(상담사 필터 포함)에서도 9월 탭 활성 유지 */
-  const active = vs==='seplist' || vs.indexOf('seplist:')===0 ? 'sep' : vs;
+  /* 리스트 화면(상담사 필터 포함)에서도 자율참여 월 탭 활성 유지 */
+  const active = vs==='seplist' || vs.indexOf('seplist:')===0 ? 'sep'
+               : vs.indexOf('autolist:')===0 ? 'auto:'+vs.slice(9).split(':')[0]
+               : vs.indexOf('award:')===0 ? 'auto:'+vs.slice(6)
+               : vs;
   document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.toggle('on', b.dataset.v===active));
   try{
     $('#view').innerHTML = vs==='main'    ? viewMain()
                          : vs==='sep'     ? viewSepMonth()
                          : vs==='seplist' ? viewSepList()
                          : vs.indexOf('seplist:')===0 ? viewSepList(vs.slice(8))
+                         : vs.indexOf('autolist:')===0 ? (function(){
+                             const p = vs.slice(9).split(':');
+                             return viewSepList(p[1]||'', findAuto(p[0]));
+                           })()
+                         : vs.indexOf('award:')===0 ? (function(){
+                             const a = findAuto(vs.slice(6));
+                             return viewAward(a && a.award);
+                           })()
+                         : vs.indexOf('auto:')===0 ? viewSepMonth(findAuto(vs.slice(5)))
                          : vs==='award'   ? viewAward()
                          : vs==='update'  ? viewUpdate()
                          : viewMonth(Number(v));
@@ -2388,10 +2436,12 @@ function go(v){
 function renderTabs(){
   $('#tabs').innerHTML = `<button class="tab on first" data-v="main" onclick="go('main')">대시보드</button>`
     + M.map(m=>`<button class="tab" data-v="${m.m}" onclick="go(${m.m})">${m.m}월</button>`).join('')
-    + `<button class="tab" data-v="sep" onclick="go('sep')">${SEP().m}월</button>`
+    + DONE().map(a=>`<button class="tab" data-v="auto:${a.m}" onclick="go('auto:${a.m}')">`
+        + `${MN(a.m)}</button>`).join('')
+    + `<button class="tab" data-v="sep" onclick="go('sep')">${SEPN()}</button>`
     + (AW().length
         ? `<button class="tab tab-aw" data-v="award" onclick="go('award')">`
-          + `${esc((DATA.award&&DATA.award.label)||'9월 시상')}</button>`
+          + `${esc(AWN())}</button>`
         : '');
 }
 
@@ -2519,13 +2569,14 @@ function buildXlsx(sheets){
 /* 화면에 반영된 값 그대로를 시트로 만든다 */
 function exportSheets(){
   const S=sepData(), m=SEP().m;
-  const mask = SEP().maskPII !== false;
+  const mask = SEP().maskPII !== false;  /* 마스킹 규칙은 전 월 공통 */
 
   const months=[['월','시도건수','동의건수','동의율(%)']];
   M.forEach(x=>months.push([x.m+'월', x.att, x.agr,
     x.att ? Math.round(x.agr/x.att*1000)/10 : '']));
+  DONE().forEach(a=>months.push([MN(a.m), '', sepData(a).agr, '']));
   const wAgr=S.weeks.reduce((a,w)=>a+(w.agr||0),0);
-  months.push([m+'월 (집계중)', '', wAgr, '']);
+  months.push([MN(m)+' (집계중)', '', wAgr, '']);
 
   const weeks=[['주차','기간','동의건수']];
   S.weeks.forEach(w=>weeks.push([w.label, w.range||'', w.agr||0]));
@@ -2557,7 +2608,7 @@ function exportSheets(){
     aw.slice().sort((x,y)=>(y[6]-x[6])||(y[4]-x[4])).forEach(r=>a.push(r.slice()));
     const t=i=>aw.reduce((s2,r)=>s2+(r[i]||0),0);
     a.push(['합계','','', aw.length+'명', t(4), t(5), t(6)]);
-    sheets.push({name:'9월시상', rows:a});
+    sheets.push({name:MN(AWM())+'시상', rows:a});
     info.push(['시상 대상', aw.length+'명']);
     info.push(['시상 기준일', (DATA.award&&DATA.award.baseDate)||BASE()||'']);
   }
@@ -2982,6 +3033,15 @@ function upResultHtml(){
   </div>`;
 }
 
+/* 동의 리스트 날짜에서 해당 월을 읽는다 (가장 많이 나온 달) */
+function monthOf(list){
+  const c={};
+  (list||[]).forEach(r=>{ const m=Number(String(r[1]||'').slice(5,7)); if(m) c[m]=(c[m]||0)+1; });
+  let best=0, n=-1;
+  for(const k in c) if(c[k]>n){ n=c[k]; best=Number(k); }
+  return best;
+}
+
 function upStage(){
   if(!UP.ok) return false;
   /* 갱신 화면을 벗어난 뒤 호출될 수 있으므로 입력칸이 없을 수도 있다 */
@@ -2993,14 +3053,33 @@ function upStage(){
     if(UP.weeks && UP.weeks[i]) UP.weeks[i].range = el.value.trim();
   });
   if(UP.weeks && UP.roster && UP.list){
+    const nm = monthOf(UP.list) || DATA.sep.m;
+    /* 다른 달 자료가 올라오면 지금까지의 달을 통째로 보관함으로 옮긴다.
+       그래야 10월을 반영해도 9월 탭과 상세가 그대로 남는다. */
+    if(nm !== DATA.sep.m && (DATA.sep.list||[]).length){
+      DATA.autoDone = DATA.autoDone || [];
+      if(!DATA.autoDone.some(a=>a.m===DATA.sep.m)){
+        DATA.autoDone.push({
+          m: DATA.sep.m, baseDate: DATA.meta.baseDate,
+          weeks: DATA.sep.weeks, roster: DATA.sep.roster, list: DATA.sep.list,
+          award: (DATA.award && DATA.award.rows && DATA.award.rows.length)
+                 ? {m: AWM(), rows: DATA.award.rows} : null
+        });
+        DATA.autoDone.sort((a,b)=>a.m-b.m);
+      }
+      /* 새 달은 시상도 새로 받는다 */
+      if(!UP.award && DATA.award) DATA.award.rows = [];
+    }
+    DATA.sep.m      = nm;
     DATA.sep.weeks  = UP.weeks.map(w=>({label:w.label, range:w.range, agr:w.agr}));
     DATA.sep.roster = UP.roster;
     DATA.sep.list   = UP.list;
   }
   if(UP.award){
-    DATA.award = DATA.award || {label:'9월 시상', baseDate:'', rows:[]};
+    DATA.award = DATA.award || {m:0, baseDate:'', rows:[]};
     DATA.award.rows = UP.award;
     DATA.award.baseDate = DATA.meta.baseDate;
+    DATA.award.m = DATA.sep.m;
   }
   return true;
 }
@@ -3031,11 +3110,19 @@ function upSource(){
     `      [${q(r[0])},${q(r[1])},${q(r[2])},${q(r[3])}, ${r[4]}, ${r[5]}, ${r[6]}]`).join(',\n')
     + ((DATA.award&&DATA.award.rows||[]).length ? '\n    ' : '    ');
 
+  /* 보관된 자율참여 월 — 한 줄에 한 달씩 (JSON 이라 형식이 깨지지 않는다) */
+  const done='\n' + DONE().map(a=>'      '+JSON.stringify(a)).join(',\n')
+    + (DONE().length ? '\n  ' : '  ');
+
   let t=sc.textContent;
   const before=t;
+  t=t.replace(/(\n  autoDone: \[)[\s\S]*?(\n  \])/,
+              '$1'+done.replace(/\$/g,'$$$$')+']');
+  t=t.replace(/(\n  award: \{\n    m: )\d+/, '$1'+(DATA.award&&DATA.award.m||0));
   t=t.replace(/(\n  award: \{[\s\S]*?\n    rows: \[)[\s\S]*?(\n    \])/,
               '$1'+award.replace(/\$/g,'$$$$')+']');
   t=t.replace(/baseDate\s*:\s*"[^"]*"/,  'baseDate : '+q(DATA.meta.baseDate));
+  t=t.replace(/(\n  sep: \{\n    m: )\d+/, '$1'+DATA.sep.m);
   t=t.replace(/updatedAt\s*:\s*"[^"]*"/, 'updatedAt: '+q(DATA.meta.updatedAt));
   t=t.replace(/(\n    weeks: \[)[\s\S]*?(\n    \],)/,  '$1'+weeks.replace(/\$/g,'$$$$')+'],');
   t=t.replace(/(\n    roster: \[)[\s\S]*?(\n    \],)/, '$1'+roster.replace(/\$/g,'$$$$')+'],');
@@ -3082,7 +3169,7 @@ function viewUpdate(){
       주간 실적 <b>엑셀 파일을 그대로 올리면</b> 됩니다. 시트 이름이 아니라 머리글을 보고
       필요한 시트·열을 찾으므로 열 순서가 달라도 괜찮습니다.
       <b>주차별 실적은 동의 리스트에서 자동 계산</b>되므로 따로 입력하지 않습니다.
-      <b>9월 시상 엑셀만</b> 올려서 시상 화면만 갱신할 수도 있습니다.
+      <b>시상 엑셀만</b> 올려서 시상 화면만 갱신할 수도 있습니다.
       인터넷 연결은 필요 없습니다.</div></div>
 
     <div class="card card-pad">
@@ -3103,7 +3190,7 @@ function viewUpdate(){
       </details>
 
       <div class="up-step" style="margin-top:22px"><span class="up-no">2</span>
-        <div><b>9월 시상 엑셀</b> <span class="up-opt">선택</span>
+        <div><b>${SEPN()} 시상 엑셀</b> <span class="up-opt">선택</span>
           <div class="hint" style="margin:2px 0 0">센터 · 팀 · 사번 · 상담사명 · 동의누적 · H-POINT · 인센티브</div></div></div>
       <input class="up-file" id="upAward" type="file"
         accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

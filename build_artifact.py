@@ -31,9 +31,9 @@ assert '주차 데이터 갱신</button>' not in s, '게시본에 갱신 링크�
 
 # 아티팩트 뷰어는 페이지에서 시작하는 내려받기를 막으므로, 눌러도 아무 일이
 # 일어나지 않는 버튼이 된다. 게시본에서는 [엑셀 내려받기] 버튼을 뺀다.
-btn = ('\n        <button class="tab" style="padding:4px 12px;font-size:12.5px;\n'
+btn = ('\n        ${src?\'\':`<button class="tab" style="padding:4px 12px;font-size:12.5px;\n'
        '          border:1px solid var(--line);border-radius:8px" '
-       'onclick="downloadXlsx()">엑셀 내려받기</button>')
+       'onclick="downloadXlsx()">엑셀 내려받기</button>`}')
 n = s.count(btn)
 assert n == 2, f'엑셀 내려받기 버튼을 2개 찾지 못함 (찾은 수: {n})'
 s = s.replace(btn, '')
