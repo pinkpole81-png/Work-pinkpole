@@ -2544,6 +2544,13 @@ function exportSheets(){
   const sheets=[{name:'월별실적', rows:months}, {name:'주간실적', rows:weeks},
                 {name:'상담사별', rows:ros},   {name:'동의List', rows:list}];
 
+  /* 받은 파일만 봐도 언제 자료인지 알 수 있도록 기준 정보를 함께 넣는다 */
+  const info=[['항목','값'],
+    ['데이터 기준일', BASE()||''],
+    ['최종 갱신', DATA.meta.updatedAt||''],
+    ['작성', DATA.meta.owner||''],
+    ['고객번호 표시', mask ? '뒤 4자리만 (마스킹)' : '전체 표시']];
+
   const aw=AW();
   if(aw.length){
     const a=[['센터','팀','사번','상담사명','동의누적','H-Point','인센티브(원)']];
@@ -2551,7 +2558,10 @@ function exportSheets(){
     const t=i=>aw.reduce((s2,r)=>s2+(r[i]||0),0);
     a.push(['합계','','', aw.length+'명', t(4), t(5), t(6)]);
     sheets.push({name:'9월시상', rows:a});
+    info.push(['시상 대상', aw.length+'명']);
+    info.push(['시상 기준일', (DATA.award&&DATA.award.baseDate)||BASE()||'']);
   }
+  sheets.push({name:'기준정보', rows:info});
   return sheets;
 }
 
