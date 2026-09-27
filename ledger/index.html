@@ -180,8 +180,44 @@ tr.sample td{opacity:.72}
 @keyframes flash{from{background:var(--accent-soft)}to{background:transparent}}
 @media (prefers-reduced-motion:reduce){.flash{animation:none}.tip{transition:none}}
 
+/* trend + comparison */
+.trend{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+.legend{margin-bottom:6px;display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.chart .bi{fill:var(--income)}
+.chart .bo{fill:var(--expense)}
+.chart g.dim .bi,.chart g.dim .bo{opacity:.4}
+.chart g.grp{cursor:pointer}
+.chart g.grp.on .bi,.chart g.grp.on .bo{opacity:1}
+.chart .ml{fill:var(--ink-2);font:12px var(--sans)}
+.chart .ml.sel{fill:var(--ink);font-weight:700}
+.chart .nt{font:11px var(--mono)}
+.chart .nt.up{fill:var(--income)}
+.chart .nt.dn{fill:var(--expense)}
+.chart .vl{fill:var(--ink-2);font:600 11px var(--mono)}
+.basis{display:inline-grid;grid-template-columns:auto auto;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:2px;gap:2px}
+.basis button{border:0;background:none;border-radius:5px;padding:3px 9px;font-size:12px;font-weight:500;color:var(--ink-2);cursor:pointer}
+.basis button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.cmp-sub{font-size:12.5px;color:var(--muted);padding:6px 20px 0}
+.cmp table{min-width:0;font-size:13.5px}
+.cmp td,.cmp th{padding:8px 10px}
+.cmp th:first-child,.cmp td:first-child{padding-left:20px}
+.cmp th:last-child,.cmp td:last-child{padding-right:20px}
+.cmp tr.grp td{font-weight:600;background:var(--surface-2)}
+.cmp tr.head td{border-bottom:1px solid var(--line)}
+.dd{display:grid;justify-items:end;line-height:1.3}
+.dd .a{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--ink-2)}
+.dl{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+.dl.good{color:var(--income)}
+.dl.bad{color:var(--expense)}
+.dl.flat,.dl.new{color:var(--muted)}
+.track{position:relative}
+.track s{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ink);opacity:.75}
+.brk-row .pv{grid-column:1/-1;display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+
 @media (max-width:980px){
   .grid{grid-template-columns:1fr}
+  .trend{grid-template-columns:1fr}
   .kpis{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:520px){
@@ -191,6 +227,9 @@ tr.sample td{opacity:.72}
   .kpi .v{font-size:20px}
   .ph,.pb{padding-left:16px;padding-right:16px}
   .tbar{padding-left:16px;padding-right:16px}
+  .cmp-sub{padding-left:16px;padding-right:16px}
+  .cmp th:first-child,.cmp td:first-child{padding-left:16px}
+  .cmp th:last-child,.cmp td:last-child{padding-right:16px}
 }
 </style>
 
@@ -217,11 +256,32 @@ tr.sample td{opacity:.72}
   </div>
 
   <section class="kpis" aria-label="월 요약">
-    <div class="kpi in"><span class="lb">이번 달 수입</span><span class="v" id="kIn">0<small>원</small></span><span class="sub" id="kInSub">&nbsp;</span></div>
-    <div class="kpi out"><span class="lb">이번 달 지출</span><span class="v" id="kOut">0<small>원</small></span><span class="sub" id="kOutSub">&nbsp;</span></div>
+    <div class="kpi in"><span class="lb" id="kInLb">이번 달 수입</span><span class="v" id="kIn">0<small>원</small></span><span class="sub" id="kInSub">&nbsp;</span></div>
+    <div class="kpi out"><span class="lb" id="kOutLb">이번 달 지출</span><span class="v" id="kOut">0<small>원</small></span><span class="sub" id="kOutSub">&nbsp;</span></div>
     <div class="kpi bal"><span class="lb">수입 − 지출</span><span class="v" id="kBal">0<small>원</small></span><span class="sub" id="kBalSub">&nbsp;</span></div>
     <div class="kpi"><span class="lb" id="kDayLb">오늘 지출</span><span class="v" id="kDay">0<small>원</small></span><span class="sub" id="kDaySub">&nbsp;</span></div>
   </section>
+
+  <div class="trend">
+    <section class="panel" aria-labelledby="trTitle">
+      <div class="ph"><h2 id="trTitle">월별 수입·지출</h2><span class="basis" id="trMode" role="group" aria-label="차트 보기"><button type="button" data-m="both" aria-pressed="true">수입·지출</button><button type="button" data-m="out" aria-pressed="false">지출만</button></span></div>
+      <div class="pb">
+        <div class="legend" id="trLegend"></div>
+        <div class="chart" id="trend"><div class="tip" id="tip2"></div></div>
+        <div class="legend-note" id="trNote"></div>
+      </div>
+    </section>
+    <section class="panel cmp" aria-labelledby="cmpTitle">
+      <div class="ph"><h2 id="cmpTitle">전월 비교</h2><span class="basis" id="basis" role="group" aria-label="비교 기준"><button type="button" data-b="same" aria-pressed="true">같은 기간</button><button type="button" data-b="full" aria-pressed="false">전월 전체</button></span></div>
+      <div class="cmp-sub" id="cmpSub"></div>
+      <div class="tscroll">
+        <table>
+          <thead><tr><th>항목</th><th class="r">이번 달</th><th class="r">전월</th><th class="r">증감</th></tr></thead>
+          <tbody id="cmpBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 
   <div class="grid">
     <div class="col">
@@ -314,6 +374,13 @@ const pad = n => String(n).padStart(2,"0");
 const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const esc = s => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const today = () => ymd(new Date());
+function addMonth(key, d){
+  const [y,m] = key.split("-").map(Number);
+  const dt = new Date(y, m-1+d, 1);
+  return dt.getFullYear()+"-"+pad(dt.getMonth()+1);
+}
+const lastDayOf = key => { const [y,m] = key.split("-").map(Number); return new Date(y, m, 0).getDate(); };
+const mNum = key => Number(key.slice(5));
 
 /* ---------- state ---------- */
 const S = {
@@ -325,27 +392,46 @@ const S = {
   type: "out",
   cat: "lunch",
   filter: "all",
+  cmp: "same",
+  trend: "both",
   confirmId: null,
   flashId: null
 };
 
 /* ---------- sample (shown only while there is no real record) ---------- */
+const SAMPLE_BASE = [
+  [1,"in","salary",3200000,""],[1,"out","lunch",9000,"김치찌개"],[2,"out","dinner",18000,"삼겹살"],
+  [3,"out","lunch",11000,"샐러드"],[5,"out","shop",46800,"생활용품"],[6,"out","cloth",89000,"니트"],
+  [8,"out","lunch",8500,"국밥"],[9,"out","dinner",32000,"친구 모임"],[10,"in","side",150000,"중고 판매"],
+  [12,"out","etc",15000,"약국"],[13,"out","lunch",9500,"칼국수"],[15,"out","shop",27400,"온라인 주문"],
+  [17,"out","dinner",14000,"배달"],[19,"out","lunch",10000,"비빔밥"],[21,"out","cloth",59000,"운동화 세일"],
+  [23,"out","dinner",26000,"가족 외식"],[24,"out","lunch",9000,"돈가스"],[26,"out","etc",12000,"택시"],
+  [28,"out","shop",38000,"마트 장보기"],[29,"out","dinner",21000,"치킨"]
+];
+const SAMPLE_F = [1, 1.18, 0.86, 1.07, 0.93, 1.25, 0.8];
+let sampleCache = null;
 function sampleEntries(){
-  const [y,m] = S.view.split("-").map(Number);
-  const last = new Date(y, m, 0).getDate();
-  const t = today();
-  const lim = t.slice(0,7) === S.view ? Number(t.slice(8)) : last;
-  const rows = [
-    [1,"in","salary",3200000,"9월 급여"],[1,"out","lunch",9000,"김치찌개"],[2,"out","dinner",18000,"삼겹살"],
-    [3,"out","lunch",11000,"샐러드"],[5,"out","shop",46800,"생활용품"],[6,"out","cloth",89000,"니트"],
-    [8,"out","lunch",8500,"국밥"],[9,"out","dinner",32000,"친구 모임"],[10,"in","side",150000,"중고 판매"],
-    [12,"out","etc",15000,"약국"],[13,"out","lunch",9500,"칼국수"],[15,"out","shop",27400,"온라인 주문"],
-    [17,"out","dinner",14000,"배달"],[19,"out","lunch",10000,"비빔밥"],[21,"out","cloth",59000,"운동화 세일"],
-    [23,"out","dinner",26000,"가족 외식"],[24,"out","lunch",9000,"돈가스"],[26,"out","etc",12000,"택시"]
-  ];
-  return rows.filter(r => r[0] <= lim).map((r,i) => ({
-    id:"s"+i, date:S.view+"-"+pad(r[0]), type:r[1], cat:r[2], amount:r[3], memo:r[4], ts:i
-  }));
+  const t = today(), curKey = t.slice(0,7), tday = Number(t.slice(8));
+  if (sampleCache && sampleCache.key === t) return sampleCache.rows;
+  const out = [];
+  for (let k = 0; k < 6; k++){
+    const key = addMonth(curKey, -k);
+    const [y,m] = key.split("-").map(Number);
+    const last = new Date(y, m, 0).getDate();
+    const lim = k === 0 ? tday : last;
+    SAMPLE_BASE.forEach((r,i) => {
+      const d = Math.min(r[0], last);
+      if (d > lim) return;
+      if (r[2] === "side" && (k % 2)) return;
+      if (r[2] === "cloth" && k === 2 && i > 10) return;
+      const f = SAMPLE_F[(k + i*3) % SAMPLE_F.length];
+      const amount = r[2] === "salary" ? r[3] : Math.round(r[3] * f / 100) * 100;
+      out.push({id:"s"+k+"_"+i, date:key+"-"+pad(d), type:r[1], cat:r[2], amount,
+        memo: r[2] === "salary" ? m+"월 급여" : r[4], ts:i});
+    });
+  }
+  sampleCache = {key:t, rows:out};
+  return out;
 }
 
 /* ---------- storage ---------- */
@@ -507,9 +593,7 @@ $("form").addEventListener("submit", ev => {
 
 /* ---------- month nav ---------- */
 function shiftMonth(d){
-  const [y,m] = S.view.split("-").map(Number);
-  const dt = new Date(y, m-1+d, 1);
-  S.view = dt.getFullYear()+"-"+pad(dt.getMonth()+1);
+  S.view = addMonth(S.view, d);
   S.confirmId = null;
   render();
 }
@@ -540,6 +624,136 @@ function monthData(){
   return {rows, carry, inc, exp, byCat, byDay};
 }
 
+function totals(key, uptoDay){
+  let inc = 0, exp = 0, nIn = 0, nOut = 0;
+  const cat = {};
+  for (const e of allEntries()){
+    if (e.date.slice(0,7) !== key) continue;
+    if (uptoDay && Number(e.date.slice(8)) > uptoDay) continue;
+    if (e.type === "in"){ inc += e.amount; nIn++; } else { exp += e.amount; nOut++; }
+    cat[e.cat] = (cat[e.cat] || 0) + e.amount;
+  }
+  return {inc, exp, nIn, nOut, cat};
+}
+function cmpData(){
+  const t = today(), isCur = t.slice(0,7) === S.view;
+  const prevKey = addMonth(S.view, -1);
+  const same = isCur && S.cmp === "same";
+  const upto = same ? Number(t.slice(8)) : 0;
+  const prevUpto = same ? Math.min(upto, lastDayOf(prevKey)) : 0;
+  return {isCur, same, upto, prevKey, prevUpto, cur: totals(S.view, upto), prev: totals(prevKey, prevUpto)};
+}
+function deltaHtml(cur, prev, goodUp, withAmt){
+  const d = cur - prev;
+  const amt = withAmt ? `<span class="a">${d>0?"+":d<0?"−":""}${won(Math.abs(d))}</span>` : "";
+  let tag;
+  if (!cur && !prev) tag = `<span class="dl flat">−</span>`;
+  else if (!prev) tag = `<span class="dl new">전월 없음</span>`;
+  else if (d === 0) tag = `<span class="dl flat">변동 없음</span>`;
+  else {
+    const cls = (d > 0) === goodUp ? "good" : "bad";
+    tag = `<span class="dl ${cls}">${d>0?"▲":"▼"} ${Math.abs(d/prev*100).toFixed(1)}%</span>`;
+  }
+  return withAmt ? `<span class="dd">${amt}${tag}</span>` : tag;
+}
+function renderCompare(C){
+  const pm = mNum(C.prevKey), cm = mNum(S.view);
+  $("basis").hidden = !C.isCur;
+  $("basis").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.b === S.cmp)));
+  $("cmpSub").textContent = C.same
+    ? `${cm}월 1~${C.upto}일과 ${pm}월 1~${C.prevUpto}일을 비교합니다.`
+    : `${cm}월 전체와 ${pm}월 전체를 비교합니다.`;
+  const bal = x => x.inc - x.exp;
+  const sgn = n => (n<0?"−":"") + won(Math.abs(n));
+  let h = "";
+  const row = (label, a, b, goodUp, cls, sw, signed) =>
+    `<tr class="${cls||""}"><td>${sw?`<span class="tag"><i style="background:var(${sw})"></i>${label}</span>`:label}</td>
+      <td class="num r">${signed?sgn(a):won(a)}</td><td class="num r" style="color:var(--ink-2)">${signed?sgn(b):won(b)}</td>
+      <td class="r">${deltaHtml(a, b, goodUp, true)}</td></tr>`;
+  h += row("수입", C.cur.inc, C.prev.inc, true, "grp");
+  h += row("지출", C.cur.exp, C.prev.exp, false, "grp");
+  h += row("수입 − 지출", bal(C.cur), bal(C.prev), true, "grp head", null, true);
+  for (const c of CATS.out) h += row(c.n, C.cur.cat[c.k]||0, C.prev.cat[c.k]||0, false, "", c.c);
+  $("cmpBody").innerHTML = h;
+  $("cmpBody").closest("table").querySelector("thead").innerHTML =
+    `<tr><th>항목</th><th class="r">${cm}월</th><th class="r">${pm}월</th><th class="r">증감</th></tr>`;
+}
+$("trMode").addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  S.trend = b.dataset.m; renderTrend();
+});
+$("basis").addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  S.cmp = b.dataset.b; render();
+});
+
+function renderTrend(){
+  const box = $("trend");
+  const W = Math.max(300, Math.round(box.clientWidth || 640)), H = W < 520 ? 230 : 290;
+  const both = S.trend === "both", narrow = W < 520;
+  const sw = v => narrow && v >= 10000 ? Math.round(v/10000).toLocaleString("ko-KR") + "만" : shortWon(v);
+  $("trMode").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === S.trend)));
+  $("trLegend").innerHTML = both
+    ? `<span><i style="background:var(--income)"></i>수입</span><span><i style="background:var(--expense)"></i>지출</span>`
+    : `<span><i style="background:var(--expense)"></i>지출</span>`;
+  $("trNote").textContent = both
+    ? "최근 6개월 · 막대 아래 숫자는 수입 − 지출 · 막대를 누르면 그 달로 이동"
+    : "최근 6개월 · 막대 아래 숫자는 전월 대비 지출 증감 · 막대를 누르면 그 달로 이동";
+  const L = 48, R = 6, T = 22, B = 46;
+  const iw = W - L - R, ih = H - T - B;
+  const keys = []; for (let k = 5; k >= 0; k--) keys.push(addMonth(S.view, -k));
+  const data = keys.map(k => Object.assign({k}, totals(k)));
+  const max = niceMax(Math.max(1, ...data.map(d => both ? Math.max(d.inc, d.exp) : d.exp)));
+  const prevExp = totals(addMonth(keys[0], -1)).exp;
+  const yv = v => T + ih - v / max * ih;
+  const step = iw / keys.length;
+  const bw = both ? Math.max(8, Math.min(28, (step - 18) / 2)) : Math.max(14, Math.min(44, step - 24));
+  const bar = (x0, v, cls) => {
+    if (v <= 0) return "";
+    const top = yv(v), h = T + ih - top, r = Math.min(4, bw/2, h), x1 = x0 + bw, yb = T + ih;
+    return `<path class="${cls}" d="M${x0},${yb}V${top+r}Q${x0},${top} ${x0+r},${top}H${x1-r}Q${x1},${top} ${x1},${top+r}V${yb}Z"/>`;
+  };
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 6개월 수입과 지출 막대 차트">`;
+  for (let i = 0; i <= 4; i++){
+    const tk = max * i / 4;
+    s += `<line class="${i===0?"base":"gl"}" x1="${L}" x2="${W-R}" y1="${yv(tk)}" y2="${yv(tk)}"/>`;
+    s += `<text class="tk" x="${L-8}" y="${yv(tk)+4}" text-anchor="end">${shortWon(tk)}</text>`;
+  }
+  data.forEach((d, i) => {
+    const cx = L + step * (i + 0.5), sel = d.k === S.view;
+    const xi = cx - bw - 1, xo = both ? cx + 1 : cx - bw/2;
+    const net = both ? d.inc - d.exp : d.exp - (i ? data[i-1].exp : prevExp);
+    const hasPrev = both || i > 0 || prevExp > 0;
+    const [yy, mm] = d.k.split("-").map(Number);
+    s += `<g class="grp${sel?"":" dim"}" data-i="${i}"><rect class="hit" x="${L+step*i}" y="${T}" width="${step}" height="${ih+B}"/>`;
+    s += (both ? bar(xi, d.inc, "bi") : "") + bar(xo, d.exp, "bo");
+    if (sel && !both && d.exp) s += `<text class="vl" x="${cx}" y="${yv(d.exp)-6}" text-anchor="middle">${sw(d.exp)}</text>`;
+    s += `<text class="ml${sel?" sel":""}" x="${cx}" y="${T+ih+18}" text-anchor="middle">${(!narrow&&(mm===1||i===0))?String(yy).slice(2)+"년 ":""}${mm}월</text>`;
+    const good = both ? net >= 0 : net <= 0;
+    if ((d.inc || d.exp) && hasPrev) s += `<text class="nt ${good?"up":"dn"}" x="${cx}" y="${T+ih+35}" text-anchor="middle">${net>0?"+":net<0?"−":""}${sw(Math.abs(net))}</text>`;
+    s += `</g>`;
+  });
+  s += `</svg>`;
+  box.querySelectorAll("svg").forEach(n => n.remove());
+  box.insertAdjacentHTML("afterbegin", s);
+  const tip = $("tip2"), svg = box.querySelector("svg");
+  svg.querySelectorAll("g.grp").forEach(g => {
+    const d = data[Number(g.dataset.i)];
+    g.addEventListener("mouseenter", () => {
+      g.classList.add("on");
+      const net = d.inc - d.exp;
+      tip.innerHTML = `${d.k.slice(0,4)}년 ${mNum(d.k)}월<br>수입 <span class="num">${won(d.inc)}원</span><br>지출 <span class="num">${won(d.exp)}원</span><br>차액 <span class="num">${net<0?"−":net>0?"+":""}${won(Math.abs(net))}원</span>`;
+      const sc = svg.getBoundingClientRect().width / W, cr = box.getBoundingClientRect();
+      const i = Number(g.dataset.i);
+      tip.style.left = Math.min(Math.max((L + step*(i+0.5))*sc, 80), cr.width - 80) + "px";
+      tip.style.top = yv(Math.max(d.inc, d.exp)) * sc + "px";
+      tip.classList.add("on");
+    });
+    g.addEventListener("mouseleave", () => { g.classList.remove("on"); tip.classList.remove("on"); });
+    g.addEventListener("click", () => { tip.classList.remove("on"); if (d.k !== S.view){ S.view = d.k; S.confirmId = null; render(); } });
+  });
+}
+
 function kpiVal(el, n, signed){
   const cls = signed ? (n > 0 ? "pos" : n < 0 ? "neg" : "") : "";
   el.className = "v " + cls;
@@ -560,8 +774,12 @@ function render(){
   kpiVal($("kOut"), D.exp);
   kpiVal($("kBal"), D.inc - D.exp, true);
   const nIn = D.rows.filter(e => e.type==="in").length, nOut = D.rows.length - nIn;
-  $("kInSub").textContent = `${nIn}건`;
-  $("kOutSub").textContent = `${nOut}건` + (D.inc > 0 ? ` · 수입 대비 ${Math.round(D.exp / D.inc * 100)}%` : "");
+  const C = cmpData();
+  const vs = C.same ? "전월 같은 기간 대비" : "전월 대비";
+  $("kInLb").textContent = (isCur ? "이번 달" : m+"월") + " 수입";
+  $("kOutLb").textContent = (isCur ? "이번 달" : m+"월") + " 지출";
+  $("kInSub").innerHTML = `${nIn}건 · ${vs} ${deltaHtml(C.cur.inc, C.prev.inc, true)}`;
+  $("kOutSub").innerHTML = `${nOut}건 · ${vs} ${deltaHtml(C.cur.exp, C.prev.exp, false)}`;
   const endBal = D.carry + D.inc - D.exp;
   $("kBalSub").textContent = `전월 이월 ${D.carry<0?"−":""}${won(Math.abs(D.carry))}원 · 월말 잔액 ${endBal<0?"−":""}${won(Math.abs(endBal))}원`;
   const daysPassed = isCur ? Number(t.slice(8)) : lastDay;
@@ -576,7 +794,9 @@ function render(){
     $("kDaySub").textContent = `${lastDay}일 기준`;
   }
 
-  renderBreakdown(D);
+  renderTrend();
+  renderCompare(C);
+  renderBreakdown(D, C);
   renderChart(D, lastDay, isCur ? daysPassed : 0);
   renderTable(D);
   $("foot").textContent = S.mode === "local"
@@ -584,18 +804,19 @@ function render(){
     : S.mode === "db" ? "기록은 이 가계부 페이지에 자동 저장되어 어느 기기에서 열어도 그대로 보입니다." : "";
 }
 
-function renderBreakdown(D){
+function renderBreakdown(D, C){
   const tot = D.exp;
-  $("bSub").textContent = tot ? `총 ${won(tot)}원` : "";
-  const rows = CATS.out.map(c => ({c, v:D.byCat[c.k] || 0}));
-  const max = Math.max(1, ...rows.map(r => r.v));
+  $("bSub").textContent = `세로선 = ${mNum(C.prevKey)}월${C.same ? " 같은 기간" : ""}`;
+  const rows = CATS.out.map(c => ({c, v:D.byCat[c.k] || 0, pv:C.prev.cat[c.k] || 0, cv:C.cur.cat[c.k] || 0}));
+  const max = Math.max(1, ...rows.map(r => Math.max(r.v, r.pv)));
   $("brk").innerHTML = rows.map(r => {
     const pct = tot ? Math.round(r.v / tot * 1000) / 10 : 0;
     return `<div class="brk-row">
       <span class="nm"><i style="background:var(${r.c.c})"></i>${r.c.n}</span>
       <span class="pct">${pct}%</span>
       <span class="am">${won(r.v)}원</span>
-      <div class="track"><b style="width:${r.v ? Math.max(1.5, r.v/max*100) : 0}%;background:var(${r.c.c})"></b></div>
+      <div class="track"><b style="width:${r.v ? Math.max(1.5, r.v/max*100) : 0}%;background:var(${r.c.c})"></b>${r.pv ? `<s style="left:${Math.min(99.5, Math.max(0.5, r.pv/max*100))}%"></s>` : ""}</div>
+      <div class="pv"><span>전월 ${won(r.pv)}원</span>${deltaHtml(r.cv, r.pv, false)}</div>
     </div>`;
   }).join("") + `<div class="brk-total"><span>지출 합계</span><span class="num">${won(tot)}원</span></div>`;
 }
