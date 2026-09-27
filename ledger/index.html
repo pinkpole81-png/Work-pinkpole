@@ -10,6 +10,7 @@
   --income:#0d7a52; --income-soft:#e2f3ec;
   --expense:#c0392b; --expense-soft:#fbe9e6;
   --bar:#43566e; --bar-hi:#1d4e89;
+  --saving:#4a3aa7; --s1:#4a3aa7; --s2:#7d6fd6; --s3:#8e8aa8;
   --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100; --c5:#e87ba4;
   --i1:#0d7a52; --i2:#2a9d8f; --i3:#6b8f3a; --i4:#7d8a98;
   --shadow:0 1px 2px rgba(19,29,42,.05),0 4px 16px rgba(19,29,42,.04);
@@ -25,6 +26,7 @@
     --income:#3dc28f; --income-soft:#123027;
     --expense:#f07c6a; --expense-soft:#3a1d1a;
     --bar:#8595a8; --bar-hi:#6fa3e3;
+    --saving:#9085e9; --s1:#9085e9; --s2:#b3aaf2; --s3:#8f8ba6;
     --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181;
     --i1:#3dc28f; --i2:#2fb3a3; --i3:#8fb356; --i4:#8795a4;
     --shadow:0 1px 2px rgba(0,0,0,.3);
@@ -38,6 +40,7 @@
   --income:#3dc28f; --income-soft:#123027;
   --expense:#f07c6a; --expense-soft:#3a1d1a;
   --bar:#8595a8; --bar-hi:#6fa3e3;
+  --saving:#9085e9; --s1:#9085e9; --s2:#b3aaf2; --s3:#8f8ba6;
   --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181;
   --i1:#3dc28f; --i2:#2fb3a3; --i3:#8fb356; --i4:#8795a4;
   --shadow:0 1px 2px rgba(0,0,0,.3);
@@ -73,16 +76,21 @@ h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em;text-wrap:balan
 /* KPI */
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
 .kpi{background:var(--surface);padding:18px 20px;display:grid;gap:4px;align-content:start}
+.kpi .lb .t{order:3}
 .kpi .lb{font-size:13px;color:var(--ink-2);font-weight:500;display:flex;align-items:center;gap:7px}
-.kpi .lb::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--muted)}
+.kpi .lb::before{order:2;content:"";width:8px;height:8px;border-radius:2px;background:var(--muted)}
 .kpi.in .lb::before{background:var(--income)}
 .kpi.out .lb::before{background:var(--expense)}
 .kpi.bal .lb::before{background:var(--accent)}
+.kpi.save .lb::before{background:var(--saving)}
+.kpi.save .v{color:var(--saving)}
+.kpi .op{display:inline-grid;place-items:center;width:20px;height:20px;border:1px solid var(--line);border-radius:5px;font:600 13px var(--mono);color:var(--ink-2);margin-right:1px}
+.kpi.bal{background:var(--surface-2)}
 .kpi .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:26px;font-weight:600;letter-spacing:-.03em;line-height:1.2;white-space:nowrap}
 .kpi .v small{font-family:var(--sans);font-size:14px;font-weight:500;margin-left:3px;color:var(--ink-2)}
 .kpi.in .v{color:var(--income)}
 .kpi.out .v{color:var(--expense)}
-.kpi .sub{font-size:12.5px;color:var(--muted)}
+.kpi .sub{font-size:12.5px;color:var(--muted);line-height:1.6}
 .pos{color:var(--income)} .neg{color:var(--expense)}
 
 /* layout */
@@ -96,10 +104,13 @@ h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em;text-wrap:balan
 
 /* form */
 form{display:grid;gap:14px}
-.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:3px;gap:3px}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:3px;gap:3px}
 .seg button{border:0;background:none;border-radius:6px;height:36px;cursor:pointer;font-weight:600;color:var(--ink-2)}
 .seg button[aria-pressed="true"][data-t="out"]{background:var(--expense);color:#fff}
 .seg button[aria-pressed="true"][data-t="in"]{background:var(--income);color:#fff}
+.seg button[aria-pressed="true"][data-t="save"]{background:var(--saving);color:#fff}
+td.sv{color:var(--saving);font-weight:500}
+.chart .bs{fill:var(--saving)}
 .field{display:grid;gap:6px}
 .field>label,.field>.lbl{font-size:12.5px;font-weight:600;color:var(--ink-2);letter-spacing:.02em}
 .inp{height:42px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:0 12px;width:100%}
@@ -152,7 +163,7 @@ form{display:grid;gap:14px}
 .chip i{width:7px;height:7px;border-radius:50%}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .tscroll{overflow-x:auto;padding:12px 0 6px}
-table{width:100%;border-collapse:collapse;min-width:660px;font-size:14px}
+table{width:100%;border-collapse:collapse;min-width:740px;font-size:14px}
 th{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface)}
 th.r,td.r{text-align:right}
 td{padding:9px 12px;border-bottom:1px solid var(--line-2);vertical-align:middle}
@@ -186,9 +197,9 @@ tr.sample td{opacity:.72}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .chart .bi{fill:var(--income)}
 .chart .bo{fill:var(--expense)}
-.chart g.dim .bi,.chart g.dim .bo{opacity:.4}
+.chart g.dim .bi,.chart g.dim .bo,.chart g.dim .bs{opacity:.4}
 .chart g.grp{cursor:pointer}
-.chart g.grp.on .bi,.chart g.grp.on .bo{opacity:1}
+.chart g.grp.on .bi,.chart g.grp.on .bo,.chart g.grp.on .bs{opacity:1}
 .chart .ml{fill:var(--ink-2);font:12px var(--sans)}
 .chart .ml.sel{fill:var(--ink);font-weight:700}
 .chart .nt{font:11px var(--mono)}
@@ -256,15 +267,15 @@ tr.sample td{opacity:.72}
   </div>
 
   <section class="kpis" aria-label="월 요약">
-    <div class="kpi in"><span class="lb" id="kInLb">이번 달 수입</span><span class="v" id="kIn">0<small>원</small></span><span class="sub" id="kInSub">&nbsp;</span></div>
-    <div class="kpi out"><span class="lb" id="kOutLb">이번 달 지출</span><span class="v" id="kOut">0<small>원</small></span><span class="sub" id="kOutSub">&nbsp;</span></div>
-    <div class="kpi bal"><span class="lb">수입 − 지출</span><span class="v" id="kBal">0<small>원</small></span><span class="sub" id="kBalSub">&nbsp;</span></div>
-    <div class="kpi"><span class="lb" id="kDayLb">오늘 지출</span><span class="v" id="kDay">0<small>원</small></span><span class="sub" id="kDaySub">&nbsp;</span></div>
+    <div class="kpi in"><span class="lb"><span class="t" id="kInLb">이번 달 수입</span></span><span class="v" id="kIn">0<small>원</small></span><span class="sub" id="kInSub">&nbsp;</span></div>
+    <div class="kpi save"><span class="lb"><span class="op" aria-hidden="true">−</span><span class="t">적금</span></span><span class="v" id="kSav">0<small>원</small></span><span class="sub" id="kSavSub">&nbsp;</span></div>
+    <div class="kpi out"><span class="lb"><span class="op" aria-hidden="true">−</span><span class="t">지출</span></span><span class="v" id="kOut">0<small>원</small></span><span class="sub" id="kOutSub">&nbsp;</span></div>
+    <div class="kpi bal"><span class="lb"><span class="op" aria-hidden="true">=</span><span class="t">남은 잔액</span></span><span class="v" id="kBal">0<small>원</small></span><span class="sub" id="kBalSub">&nbsp;</span></div>
   </section>
 
   <div class="trend">
     <section class="panel" aria-labelledby="trTitle">
-      <div class="ph"><h2 id="trTitle">월별 수입·지출</h2><span class="basis" id="trMode" role="group" aria-label="차트 보기"><button type="button" data-m="both" aria-pressed="true">수입·지출</button><button type="button" data-m="out" aria-pressed="false">지출만</button></span></div>
+      <div class="ph"><h2 id="trTitle">월별 수입·적금·지출</h2><span class="basis" id="trMode" role="group" aria-label="차트 보기"><button type="button" data-m="both" aria-pressed="true">전체</button><button type="button" data-m="out" aria-pressed="false">지출만</button></span></div>
       <div class="pb">
         <div class="legend" id="trLegend"></div>
         <div class="chart" id="trend"><div class="tip" id="tip2"></div></div>
@@ -289,8 +300,9 @@ tr.sample td{opacity:.72}
         <div class="ph"><h2 id="fTitle">기록하기</h2><span>금액은 원 단위</span></div>
         <div class="pb">
           <form id="form" novalidate>
-            <div class="seg" role="group" aria-label="수입/지출">
+            <div class="seg" role="group" aria-label="지출/적금/수입">
               <button type="button" data-t="out" aria-pressed="true">지출</button>
+              <button type="button" data-t="save" aria-pressed="false">적금</button>
               <button type="button" data-t="in" aria-pressed="false">수입</button>
             </div>
             <div class="field">
@@ -328,11 +340,11 @@ tr.sample td{opacity:.72}
       </section>
 
       <section class="panel" aria-labelledby="tTitle">
-        <div class="ph"><h2 id="tTitle">현금출납장</h2><span>일자 순 · 잔액은 전월 이월 포함</span></div>
+        <div class="ph"><h2 id="tTitle">현금출납장</h2><span>일자 순 · 잔액 = 이월 + 수입 − 적금 − 지출</span></div>
         <div class="tbar" id="filters" role="group" aria-label="분류 필터"></div>
         <div class="tscroll">
           <table>
-            <thead><tr><th>일자</th><th>분류</th><th>적요</th><th class="r">수입</th><th class="r">지출</th><th class="r">잔액</th><th><span hidden>삭제</span></th></tr></thead>
+            <thead><tr><th>일자</th><th>분류</th><th>적요</th><th class="r">수입</th><th class="r">적금</th><th class="r">지출</th><th class="r">잔액</th><th><span hidden>삭제</span></th></tr></thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
@@ -355,6 +367,11 @@ const CATS = {
     {k:"shop",  n:"쇼핑", c:"--c4"},
     {k:"etc",   n:"기타", c:"--c5"}
   ],
+  save: [
+    {k:"deposit",n:"적금",   c:"--s1"},
+    {k:"sub",    n:"청약",   c:"--s2"},
+    {k:"setc",   n:"기타저축",c:"--s3"}
+  ],
   in: [
     {k:"salary",n:"급여",   c:"--i1"},
     {k:"side",  n:"부수입", c:"--i2"},
@@ -362,9 +379,12 @@ const CATS = {
     {k:"inetc", n:"기타수입",c:"--i4"}
   ]
 };
-const QUICK = {out:[5000,10000,30000,50000], in:[100000,500000,1000000]};
+const QUICK = {out:[5000,10000,30000,50000], save:[100000,300000,500000], in:[100000,500000,1000000]};
+const TYPE_N = {in:"수입", save:"적금", out:"지출"};
+const TYPE_TO = {in:"수입으로", save:"적금으로", out:"지출로"};
+const flow = e => e.type === "in" ? e.amount : -e.amount;
 const CAT_BY = {};
-for (const t of ["out","in"]) for (const c of CATS[t]) CAT_BY[c.k] = Object.assign({t}, c);
+for (const t of ["out","save","in"]) for (const c of CATS[t]) CAT_BY[c.k] = Object.assign({t}, c);
 const WD = ["일","월","화","수","목","금","토"];
 const LS_KEY = "daily-ledger-v1";
 
@@ -400,7 +420,7 @@ const S = {
 
 /* ---------- sample (shown only while there is no real record) ---------- */
 const SAMPLE_BASE = [
-  [1,"in","salary",3200000,""],[1,"out","lunch",9000,"김치찌개"],[2,"out","dinner",18000,"삼겹살"],
+  [1,"in","salary",3200000,""],[2,"save","deposit",500000,"정기적금 자동이체"],[25,"save","sub",100000,"주택청약"],[1,"out","lunch",9000,"김치찌개"],[2,"out","dinner",18000,"삼겹살"],
   [3,"out","lunch",11000,"샐러드"],[5,"out","shop",46800,"생활용품"],[6,"out","cloth",89000,"니트"],
   [8,"out","lunch",8500,"국밥"],[9,"out","dinner",32000,"친구 모임"],[10,"in","side",150000,"중고 판매"],
   [12,"out","etc",15000,"약국"],[13,"out","lunch",9500,"칼국수"],[15,"out","shop",27400,"온라인 주문"],
@@ -424,8 +444,9 @@ function sampleEntries(){
       if (d > lim) return;
       if (r[2] === "side" && (k % 2)) return;
       if (r[2] === "cloth" && k === 2 && i > 10) return;
+      if (r[2] === "sub" && k === 3) return;
       const f = SAMPLE_F[(k + i*3) % SAMPLE_F.length];
-      const amount = r[2] === "salary" ? r[3] : Math.round(r[3] * f / 100) * 100;
+      const amount = (r[2] === "salary" || r[1] === "save") ? r[3] : Math.round(r[3] * f / 100) * 100;
       out.push({id:"s"+k+"_"+i, date:key+"-"+pad(d), type:r[1], cat:r[2], amount,
         memo: r[2] === "salary" ? m+"월 급여" : r[4], ts:i});
     });
@@ -549,7 +570,7 @@ function renderForm(){
   $("catBtns").innerHTML = CATS[S.type].map(c =>
     `<button type="button" data-k="${c.k}" aria-pressed="${c.k===S.cat}"><i style="background:var(${c.c})"></i>${c.n}</button>`).join("");
   $("quick").innerHTML = QUICK[S.type].map(v => `<button type="button" data-v="${v}">+${won(v)}</button>`).join("");
-  $("fSubmit").textContent = S.type === "out" ? "지출 기록" : "수입 기록";
+  $("fSubmit").textContent = TYPE_N[S.type] + " 기록";
 }
 document.querySelector(".seg").addEventListener("click", ev => {
   const b = ev.target.closest("button"); if (!b) return;
@@ -585,7 +606,7 @@ $("form").addEventListener("submit", ev => {
   };
   S.view = date.slice(0,7);
   addEntry(e);
-  msg.textContent = `${CAT_BY[e.cat].n} ${won(amount)}원을 ${S.type==="out"?"지출로":"수입으로"} 기록했습니다.`;
+  msg.textContent = `${CAT_BY[e.cat].n} ${won(amount)}원을 ${TYPE_TO[S.type]} 기록했습니다.`;
   msg.className = "formmsg";
   $("fAmt").value = ""; $("fMemo").value = "";
   $("fAmt").focus();
@@ -608,32 +629,34 @@ function monthData(){
   let carry = 0;
   const rows = [];
   for (const e of all){
-    const s = e.type === "in" ? e.amount : -e.amount;
-    if (e.date < start) carry += s;
+    if (e.date < start) carry += flow(e);
     else if (e.date.slice(0,7) === S.view) rows.push(e);
   }
-  let inc = 0, exp = 0;
+  let inc = 0, exp = 0, sav = 0;
   const byCat = {}, byDay = {};
   for (const e of rows){
-    if (e.type === "in") inc += e.amount; else exp += e.amount;
+    if (e.type === "in") inc += e.amount; else if (e.type === "save") sav += e.amount; else exp += e.amount;
     byCat[e.cat] = (byCat[e.cat] || 0) + e.amount;
     const d = Number(e.date.slice(8));
-    byDay[d] = byDay[d] || {in:0,out:0};
+    byDay[d] = byDay[d] || {in:0,out:0,save:0};
     byDay[d][e.type] += e.amount;
   }
-  return {rows, carry, inc, exp, byCat, byDay};
+  const savAll = all.filter(e => e.type === "save" && e.date.slice(0,7) <= S.view).reduce((a,e) => a + e.amount, 0);
+  return {rows, carry, inc, exp, sav, savAll, byCat, byDay};
 }
 
 function totals(key, uptoDay){
-  let inc = 0, exp = 0, nIn = 0, nOut = 0;
+  let inc = 0, exp = 0, sav = 0, nIn = 0, nOut = 0, nSav = 0;
   const cat = {};
   for (const e of allEntries()){
     if (e.date.slice(0,7) !== key) continue;
     if (uptoDay && Number(e.date.slice(8)) > uptoDay) continue;
-    if (e.type === "in"){ inc += e.amount; nIn++; } else { exp += e.amount; nOut++; }
+    if (e.type === "in"){ inc += e.amount; nIn++; }
+    else if (e.type === "save"){ sav += e.amount; nSav++; }
+    else { exp += e.amount; nOut++; }
     cat[e.cat] = (cat[e.cat] || 0) + e.amount;
   }
-  return {inc, exp, nIn, nOut, cat};
+  return {inc, exp, sav, nIn, nOut, nSav, cat};
 }
 function cmpData(){
   const t = today(), isCur = t.slice(0,7) === S.view;
@@ -663,7 +686,7 @@ function renderCompare(C){
   $("cmpSub").textContent = C.same
     ? `${cm}월 1~${C.upto}일과 ${pm}월 1~${C.prevUpto}일을 비교합니다.`
     : `${cm}월 전체와 ${pm}월 전체를 비교합니다.`;
-  const bal = x => x.inc - x.exp;
+  const bal = x => x.inc - x.sav - x.exp;
   const sgn = n => (n<0?"−":"") + won(Math.abs(n));
   let h = "";
   const row = (label, a, b, goodUp, cls, sw, signed) =>
@@ -671,8 +694,9 @@ function renderCompare(C){
       <td class="num r">${signed?sgn(a):won(a)}</td><td class="num r" style="color:var(--ink-2)">${signed?sgn(b):won(b)}</td>
       <td class="r">${deltaHtml(a, b, goodUp, true)}</td></tr>`;
   h += row("수입", C.cur.inc, C.prev.inc, true, "grp");
+  h += row("적금", C.cur.sav, C.prev.sav, true, "grp");
   h += row("지출", C.cur.exp, C.prev.exp, false, "grp");
-  h += row("수입 − 지출", bal(C.cur), bal(C.prev), true, "grp head", null, true);
+  h += row("남은 잔액", bal(C.cur), bal(C.prev), true, "grp head", null, true);
   for (const c of CATS.out) h += row(c.n, C.cur.cat[c.k]||0, C.prev.cat[c.k]||0, false, "", c.c);
   $("cmpBody").innerHTML = h;
   $("cmpBody").closest("table").querySelector("thead").innerHTML =
@@ -694,10 +718,10 @@ function renderTrend(){
   const sw = v => narrow && v >= 10000 ? Math.round(v/10000).toLocaleString("ko-KR") + "만" : shortWon(v);
   $("trMode").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === S.trend)));
   $("trLegend").innerHTML = both
-    ? `<span><i style="background:var(--income)"></i>수입</span><span><i style="background:var(--expense)"></i>지출</span>`
+    ? `<span><i style="background:var(--income)"></i>수입</span><span><i style="background:var(--saving)"></i>적금</span><span><i style="background:var(--expense)"></i>지출</span>`
     : `<span><i style="background:var(--expense)"></i>지출</span>`;
   $("trNote").textContent = both
-    ? "최근 6개월 · 막대 아래 숫자는 수입 − 지출 · 막대를 누르면 그 달로 이동"
+    ? "최근 6개월 · 막대 아래 숫자는 남은 잔액(수입 − 적금 − 지출) · 막대를 누르면 그 달로 이동"
     : "최근 6개월 · 막대 아래 숫자는 전월 대비 지출 증감 · 막대를 누르면 그 달로 이동";
   const L = 48, R = 6, T = 22, B = 46;
   const iw = W - L - R, ih = H - T - B;
@@ -707,7 +731,7 @@ function renderTrend(){
   const prevExp = totals(addMonth(keys[0], -1)).exp;
   const yv = v => T + ih - v / max * ih;
   const step = iw / keys.length;
-  const bw = both ? Math.max(8, Math.min(28, (step - 18) / 2)) : Math.max(14, Math.min(44, step - 24));
+  const bw = both ? Math.max(6, Math.min(24, (step - 20) / 3)) : Math.max(14, Math.min(44, step - 24));
   const bar = (x0, v, cls) => {
     if (v <= 0) return "";
     const top = yv(v), h = T + ih - top, r = Math.min(4, bw/2, h), x1 = x0 + bw, yb = T + ih;
@@ -721,16 +745,16 @@ function renderTrend(){
   }
   data.forEach((d, i) => {
     const cx = L + step * (i + 0.5), sel = d.k === S.view;
-    const xi = cx - bw - 1, xo = both ? cx + 1 : cx - bw/2;
-    const net = both ? d.inc - d.exp : d.exp - (i ? data[i-1].exp : prevExp);
+    const xi = cx - bw*1.5 - 2, xs = cx - bw/2, xo = both ? cx + bw/2 + 2 : cx - bw/2;
+    const net = both ? d.inc - d.sav - d.exp : d.exp - (i ? data[i-1].exp : prevExp);
     const hasPrev = both || i > 0 || prevExp > 0;
     const [yy, mm] = d.k.split("-").map(Number);
     s += `<g class="grp${sel?"":" dim"}" data-i="${i}"><rect class="hit" x="${L+step*i}" y="${T}" width="${step}" height="${ih+B}"/>`;
-    s += (both ? bar(xi, d.inc, "bi") : "") + bar(xo, d.exp, "bo");
+    s += (both ? bar(xi, d.inc, "bi") + bar(xs, d.sav, "bs") : "") + bar(xo, d.exp, "bo");
     if (sel && !both && d.exp) s += `<text class="vl" x="${cx}" y="${yv(d.exp)-6}" text-anchor="middle">${sw(d.exp)}</text>`;
     s += `<text class="ml${sel?" sel":""}" x="${cx}" y="${T+ih+18}" text-anchor="middle">${(!narrow&&(mm===1||i===0))?String(yy).slice(2)+"년 ":""}${mm}월</text>`;
     const good = both ? net >= 0 : net <= 0;
-    if ((d.inc || d.exp) && hasPrev) s += `<text class="nt ${good?"up":"dn"}" x="${cx}" y="${T+ih+35}" text-anchor="middle">${net>0?"+":net<0?"−":""}${sw(Math.abs(net))}</text>`;
+    if ((d.inc || d.exp || d.sav) && hasPrev) s += `<text class="nt ${good?"up":"dn"}" x="${cx}" y="${T+ih+35}" text-anchor="middle">${net>0?"+":net<0?"−":""}${sw(Math.abs(net))}</text>`;
     s += `</g>`;
   });
   s += `</svg>`;
@@ -741,12 +765,12 @@ function renderTrend(){
     const d = data[Number(g.dataset.i)];
     g.addEventListener("mouseenter", () => {
       g.classList.add("on");
-      const net = d.inc - d.exp;
-      tip.innerHTML = `${d.k.slice(0,4)}년 ${mNum(d.k)}월<br>수입 <span class="num">${won(d.inc)}원</span><br>지출 <span class="num">${won(d.exp)}원</span><br>차액 <span class="num">${net<0?"−":net>0?"+":""}${won(Math.abs(net))}원</span>`;
+      const net = d.inc - d.sav - d.exp;
+      tip.innerHTML = `${d.k.slice(0,4)}년 ${mNum(d.k)}월<br>수입 <span class="num">${won(d.inc)}원</span><br>적금 <span class="num">${won(d.sav)}원</span><br>지출 <span class="num">${won(d.exp)}원</span><br>남은 잔액 <span class="num">${net<0?"−":net>0?"+":""}${won(Math.abs(net))}원</span>`;
       const sc = svg.getBoundingClientRect().width / W, cr = box.getBoundingClientRect();
       const i = Number(g.dataset.i);
       tip.style.left = Math.min(Math.max((L + step*(i+0.5))*sc, 80), cr.width - 80) + "px";
-      tip.style.top = yv(Math.max(d.inc, d.exp)) * sc + "px";
+      tip.style.top = yv(both ? Math.max(d.inc, d.exp, d.sav) : d.exp) * sc + "px";
       tip.classList.add("on");
     });
     g.addEventListener("mouseleave", () => { g.classList.remove("on"); tip.classList.remove("on"); });
@@ -771,28 +795,22 @@ function render(){
   const isCur = t.slice(0,7) === S.view;
 
   kpiVal($("kIn"), D.inc);
+  kpiVal($("kSav"), D.sav);
   kpiVal($("kOut"), D.exp);
-  kpiVal($("kBal"), D.inc - D.exp, true);
-  const nIn = D.rows.filter(e => e.type==="in").length, nOut = D.rows.length - nIn;
+  kpiVal($("kBal"), D.inc - D.sav - D.exp, true);
   const C = cmpData();
-  const vs = C.same ? "전월 같은 기간 대비" : "전월 대비";
+  const vs = C.same ? "전월 같은 기간" : "전월 대비";
+  const n = t0 => D.rows.filter(e => e.type === t0).length;
   $("kInLb").textContent = (isCur ? "이번 달" : m+"월") + " 수입";
-  $("kOutLb").textContent = (isCur ? "이번 달" : m+"월") + " 지출";
-  $("kInSub").innerHTML = `${nIn}건 · ${vs} ${deltaHtml(C.cur.inc, C.prev.inc, true)}`;
-  $("kOutSub").innerHTML = `${nOut}건 · ${vs} ${deltaHtml(C.cur.exp, C.prev.exp, false)}`;
-  const endBal = D.carry + D.inc - D.exp;
-  $("kBalSub").textContent = `전월 이월 ${D.carry<0?"−":""}${won(Math.abs(D.carry))}원 · 월말 잔액 ${endBal<0?"−":""}${won(Math.abs(endBal))}원`;
+  $("kInSub").innerHTML = `${n("in")}건<br>${vs} ${deltaHtml(C.cur.inc, C.prev.inc, true)}`;
+  $("kSavSub").innerHTML = `${D.inc ? "수입의 " + Math.round(D.sav / D.inc * 100) + "% · " : ""}누적 ${won(D.savAll)}원<br>${vs} ${deltaHtml(C.cur.sav, C.prev.sav, true)}`;
   const daysPassed = isCur ? Number(t.slice(8)) : lastDay;
-  if (isCur){
-    const td = D.byDay[daysPassed] || {in:0,out:0};
-    $("kDayLb").textContent = "오늘 지출";
-    kpiVal($("kDay"), td.out);
-    $("kDaySub").textContent = `하루 평균 ${won(D.exp / Math.max(1,daysPassed))}원`;
-  } else {
-    $("kDayLb").textContent = "하루 평균 지출";
-    kpiVal($("kDay"), D.exp / lastDay);
-    $("kDaySub").textContent = `${lastDay}일 기준`;
-  }
+  const todayOut = isCur ? ((D.byDay[daysPassed] || {}).out || 0) : null;
+  $("kOutSub").innerHTML = `${n("out")}건${todayOut !== null ? " · 오늘 " + won(todayOut) + "원" : ""}<br>${vs} ${deltaHtml(C.cur.exp, C.prev.exp, false)}`;
+  const endBal = D.carry + D.inc - D.sav - D.exp;
+  const sg = x => (x<0?"−":"") + won(Math.abs(x));
+  $("kBalSub").innerHTML = `전월 이월 ${sg(D.carry)}원<br>월말 통장 잔액 ${sg(endBal)}원`;
+  $("cNote").dataset.avg = `하루 평균 ${won(D.exp / Math.max(1, daysPassed))}원`;
 
   renderTrend();
   renderCompare(C);
@@ -863,16 +881,16 @@ function renderChart(D, lastDay, todayD){
   const withSpend = vals.filter(v => v > 0).length;
   const peak = Math.max(...vals);
   $("cSub").textContent = withSpend ? `지출한 날 ${withSpend}일` : "";
-  $("cNote").textContent = peak ? `가장 많이 쓴 날: ${vals.indexOf(peak)+1}일 · ${won(peak)}원` : "이 달에는 아직 지출 기록이 없습니다.";
+  $("cNote").textContent = peak ? `${$("cNote").dataset.avg || ""} · 가장 많이 쓴 날: ${vals.indexOf(peak)+1}일 · ${won(peak)}원` : "이 달에는 아직 지출 기록이 없습니다.";
 
   const tip = $("tip"), svg = chart.querySelector("svg");
   svg.querySelectorAll("g[data-d]").forEach(g => {
     g.addEventListener("mouseenter", () => {
-      const d = Number(g.dataset.d), bd = D.byDay[d] || {in:0,out:0};
+      const d = Number(g.dataset.d), bd = D.byDay[d] || {in:0,out:0,save:0};
       const [y,m] = S.view.split("-").map(Number);
       const wd = WD[new Date(y, m-1, d).getDay()];
       g.classList.add("on");
-      tip.innerHTML = `${m}월 ${d}일 (${wd})<br>지출 <span class="num">${won(bd.out)}원</span>` + (bd.in ? `<br>수입 <span class="num">${won(bd.in)}원</span>` : "");
+      tip.innerHTML = `${m}월 ${d}일 (${wd})<br>지출 <span class="num">${won(bd.out)}원</span>` + (bd.save ? `<br>적금 <span class="num">${won(bd.save)}원</span>` : "") + (bd.in ? `<br>수입 <span class="num">${won(bd.in)}원</span>` : "");
       const rect = svg.getBoundingClientRect(), cr = chart.getBoundingClientRect();
       const sc = rect.width / W;
       const cx = (L + step*(d-0.5)) * sc;
@@ -886,7 +904,7 @@ function renderChart(D, lastDay, todayD){
 }
 
 function renderFilters(){
-  const opts = [{k:"all",n:"전체"},{k:"out",n:"지출만"},{k:"in",n:"수입만"}].concat(CATS.out);
+  const opts = [{k:"all",n:"전체"},{k:"out",n:"지출만"},{k:"save",n:"적금만"},{k:"in",n:"수입만"}].concat(CATS.out);
   $("filters").innerHTML = opts.map(o =>
     `<button type="button" class="chip" data-k="${o.k}" aria-pressed="${S.filter===o.k}">${o.c?`<i style="background:var(${o.c})"></i>`:""}${o.n}</button>`).join("");
 }
@@ -897,7 +915,7 @@ $("filters").addEventListener("click", ev => {
 
 function passes(e){
   if (S.filter === "all") return true;
-  if (S.filter === "in" || S.filter === "out") return e.type === S.filter;
+  if (S.filter === "in" || S.filter === "out" || S.filter === "save") return e.type === S.filter;
   return e.cat === S.filter;
 }
 
@@ -906,20 +924,20 @@ function renderTable(D){
   const [y,m] = S.view.split("-").map(Number);
   const sign = n => (n<0?"−":"") + won(Math.abs(n));
   let bal = D.carry;
-  let h = `<tr class="carry"><td class="dt">${pad(m)}.01</td><td colspan="4">전월 이월</td><td class="num r bal">${sign(D.carry)}</td><td></td></tr>`;
-  let curDay = null, dIn = 0, dOut = 0, dN = 0, shown = 0, fIn = 0, fOut = 0;
+  let h = `<tr class="carry"><td class="dt">${pad(m)}.01</td><td colspan="5">전월 이월</td><td class="num r bal">${sign(D.carry)}</td><td></td></tr>`;
+  let curDay = null, dIn = 0, dOut = 0, dSav = 0, dN = 0, shown = 0, fIn = 0, fOut = 0, fSav = 0;
   const flushDay = () => {
     if (curDay === null || dN < 2) return;
-    h += `<tr class="sub"><td colspan="3">${Number(curDay.slice(5,7))}월 ${Number(curDay.slice(8))}일 소계</td><td class="num r">${dIn?won(dIn):""}</td><td class="num r">${dOut?won(dOut):""}</td><td class="num r">${sign(bal)}</td><td></td></tr>`;
+    h += `<tr class="sub"><td colspan="3">${Number(curDay.slice(5,7))}월 ${Number(curDay.slice(8))}일 소계</td><td class="num r">${dIn?won(dIn):""}</td><td class="num r">${dSav?won(dSav):""}</td><td class="num r">${dOut?won(dOut):""}</td><td class="num r">${sign(bal)}</td><td></td></tr>`;
   };
   for (const e of D.rows){
-    if (e.date !== curDay){ flushDay(); curDay = e.date; dIn = 0; dOut = 0; dN = 0; }
+    if (e.date !== curDay){ flushDay(); curDay = e.date; dIn = 0; dOut = 0; dSav = 0; dN = 0; }
     dN++;
-    bal += e.type === "in" ? e.amount : -e.amount;
-    if (e.type === "in") dIn += e.amount; else dOut += e.amount;
+    bal += flow(e);
+    if (e.type === "in") dIn += e.amount; else if (e.type === "save") dSav += e.amount; else dOut += e.amount;
     if (!passes(e)) continue;
     shown++;
-    if (e.type === "in") fIn += e.amount; else fOut += e.amount;
+    if (e.type === "in") fIn += e.amount; else if (e.type === "save") fSav += e.amount; else fOut += e.amount;
     const c = CAT_BY[e.cat] || {n:e.cat, c:"--muted"};
     const wd = WD[new Date(y, m-1, Number(e.date.slice(8))).getDay()];
     const del = S.sample ? "" : (S.confirmId === e.id
@@ -930,15 +948,16 @@ function renderTable(D){
       <td><span class="tag"><i style="background:var(${c.c})"></i>${esc(c.n)}</span></td>
       <td class="memo">${esc(e.memo || "")}</td>
       <td class="num r in">${e.type==="in"?won(e.amount):""}</td>
+      <td class="num r sv">${e.type==="save"?won(e.amount):""}</td>
       <td class="num r out">${e.type==="out"?won(e.amount):""}</td>
       <td class="num r bal">${sign(bal)}</td>
       <td>${del}</td></tr>`;
   }
   flushDay();
-  if (!D.rows.length) h += `<tr><td colspan="7" class="empty">${y}년 ${m}월에는 기록이 없습니다. 왼쪽에서 첫 항목을 기록하세요.</td></tr>`;
-  else if (!shown) h += `<tr><td colspan="7" class="empty">선택한 분류의 기록이 없습니다.</td></tr>`;
+  if (!D.rows.length) h += `<tr><td colspan="8" class="empty">${y}년 ${m}월에는 기록이 없습니다. 왼쪽에서 첫 항목을 기록하세요.</td></tr>`;
+  else if (!shown) h += `<tr><td colspan="8" class="empty">선택한 분류의 기록이 없습니다.</td></tr>`;
   const label = S.filter === "all" ? "월 합계" : "선택 분류 합계";
-  h += `<tr class="total"><td colspan="3">${label}</td><td class="num r in">${won(S.filter==="all"?D.inc:fIn)}</td><td class="num r out">${won(S.filter==="all"?D.exp:fOut)}</td><td class="num r">${sign(D.carry + D.inc - D.exp)}</td><td></td></tr>`;
+  h += `<tr class="total"><td colspan="3">${label}</td><td class="num r in">${won(S.filter==="all"?D.inc:fIn)}</td><td class="num r sv">${won(S.filter==="all"?D.sav:fSav)}</td><td class="num r out">${won(S.filter==="all"?D.exp:fOut)}</td><td class="num r">${sign(D.carry + D.inc - D.sav - D.exp)}</td><td></td></tr>`;
   $("tbody").innerHTML = h;
   S.flashId = null;
 }
@@ -957,11 +976,11 @@ $("csvBtn").addEventListener("click", async () => {
   const all = allEntries().slice().sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.ts - b.ts);
   const q = s => `"${String(s).replace(/"/g,'""')}"`;
   let bal = 0;
-  const lines = ["일자,구분,분류,적요,수입,지출,잔액"];
+  const lines = ["일자,구분,분류,적요,수입,적금,지출,잔액"];
   for (const e of all){
-    bal += e.type === "in" ? e.amount : -e.amount;
-    lines.push([e.date, e.type==="in"?"수입":"지출", q((CAT_BY[e.cat]||{n:e.cat}).n), q(e.memo||""),
-      e.type==="in"?e.amount:"", e.type==="out"?e.amount:"", bal].join(","));
+    bal += flow(e);
+    lines.push([e.date, TYPE_N[e.type], q((CAT_BY[e.cat]||{n:e.cat}).n), q(e.memo||""),
+      e.type==="in"?e.amount:"", e.type==="save"?e.amount:"", e.type==="out"?e.amount:"", bal].join(","));
   }
   try {
     await downloads.save({filename:`가계부_${today()}.csv`, data:"﻿" + lines.join("\r\n")});
