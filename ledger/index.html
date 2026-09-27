@@ -181,7 +181,6 @@ td.bal{color:var(--ink-2)}
 tr.carry td{background:var(--surface-2);color:var(--ink-2);font-size:13px}
 tr.sub td{background:var(--surface-2);font-size:13px;font-weight:600;color:var(--ink-2);border-bottom:1px solid var(--line)}
 tr.total td{font-weight:700;border-top:2px solid var(--ink);border-bottom:0;padding-top:12px;padding-bottom:12px}
-tr.sample td{opacity:.72}
 .del{border:0;background:none;color:var(--muted);cursor:pointer;width:28px;height:28px;border-radius:6px;font-size:16px;line-height:1}
 .del:hover{background:var(--expense-soft);color:var(--expense)}
 .del.confirm{width:auto;padding:0 8px;background:var(--expense);color:#fff;font-size:12px;font-weight:600}
@@ -261,10 +260,6 @@ tr.sample td{opacity:.72}
       <button type="button" class="ghost" id="csvBtn" hidden>CSV 내보내기</button>
     </div>
   </header>
-
-  <div class="notice" id="sampleNote" hidden>
-    <span><b>예시 데이터</b>로 화면을 보여주고 있습니다. 첫 항목을 기록하면 예시는 사라지고 실제 기록만 남습니다.</span>
-  </div>
 
   <section class="kpis" aria-label="월 요약">
     <div class="kpi in"><span class="lb"><span class="t" id="kInLb">이번 달 수입</span></span><span class="v" id="kIn">0<small>원</small></span><span class="sub" id="kInSub">&nbsp;</span></div>
@@ -407,7 +402,6 @@ const mNum = key => Number(key.slice(5));
 const S = {
   months: {},          // "YYYY-MM" -> entries[]
   loaded: false,
-  sample: true,
   mode: "wait",        // wait | db | local
   view: today().slice(0,7),
   type: "out",
@@ -419,49 +413,11 @@ const S = {
   flashId: null
 };
 
-/* ---------- sample (shown only while there is no real record) ---------- */
-const SAMPLE_BASE = [
-  [1,"in","salary",3200000,""],[2,"save","deposit",500000,"정기적금 자동이체"],[25,"save","sub",100000,"주택청약"],[1,"out","lunch",9000,"김치찌개"],[2,"out","dinner",18000,"삼겹살"],
-  [3,"out","lunch",11000,"샐러드"],[5,"out","shop",46800,"생활용품"],[6,"out","cloth",89000,"니트"],
-  [8,"out","lunch",8500,"국밥"],[9,"out","dinner",32000,"친구 모임"],[10,"in","side",150000,"중고 판매"],
-  [12,"out","etc",15000,"약국"],[14,"out","card",184000,"신용카드 결제"],[13,"out","lunch",9500,"칼국수"],[15,"out","shop",27400,"온라인 주문"],
-  [17,"out","dinner",14000,"배달"],[19,"out","lunch",10000,"비빔밥"],[21,"out","cloth",59000,"운동화 세일"],
-  [23,"out","dinner",26000,"가족 외식"],[24,"out","lunch",9000,"돈가스"],[26,"out","etc",12000,"택시"],
-  [28,"out","shop",38000,"마트 장보기"],[29,"out","dinner",21000,"치킨"]
-];
-const SAMPLE_F = [1, 1.18, 0.86, 1.07, 0.93, 1.25, 0.8];
-let sampleCache = null;
-function sampleEntries(){
-  const t = today(), curKey = t.slice(0,7), tday = Number(t.slice(8));
-  if (sampleCache && sampleCache.key === t) return sampleCache.rows;
-  const out = [];
-  for (let k = 0; k < 6; k++){
-    const key = addMonth(curKey, -k);
-    const [y,m] = key.split("-").map(Number);
-    const last = new Date(y, m, 0).getDate();
-    const lim = k === 0 ? tday : last;
-    SAMPLE_BASE.forEach((r,i) => {
-      const d = Math.min(r[0], last);
-      if (d > lim) return;
-      if (r[2] === "side" && (k % 2)) return;
-      if (r[2] === "cloth" && k === 2 && i > 10) return;
-      if (r[2] === "sub" && k === 3) return;
-      const f = SAMPLE_F[(k + i*3) % SAMPLE_F.length];
-      const amount = (r[2] === "salary" || r[1] === "save") ? r[3] : Math.round(r[3] * f / 100) * 100;
-      out.push({id:"s"+k+"_"+i, date:key+"-"+pad(d), type:r[1], cat:r[2], amount,
-        memo: r[2] === "salary" ? m+"월 급여" : r[4], ts:i});
-    });
-  }
-  sampleCache = {key:t, rows:out};
-  return out;
-}
-
 /* ---------- storage ---------- */
 let db = null, col = null;
 let writeChain = Promise.resolve();
 
 function allEntries(){
-  if (S.sample) return sampleEntries();
   const out = [];
   for (const k in S.months) for (const e of S.months[k]) out.push(e);
   return out;
@@ -487,7 +443,6 @@ function setStore(mode){
 
 function applyLoaded(){
   S.loaded = true;
-  S.sample = realCount() === 0;
   render();
 }
 
@@ -544,7 +499,6 @@ function persistMonth(key){
 
 function addEntry(e){
   const key = e.date.slice(0,7);
-  if (S.sample){ S.sample = false; }
   S.months[key] = (S.months[key] || []).concat([e]);
   S.flashId = e.id;
   render();
@@ -669,6 +623,7 @@ function cmpData(){
 }
 function deltaHtml(cur, prev, goodUp, withAmt){
   const d = cur - prev;
+  if (!cur && !prev) return `<span class="dl flat">−</span>`;
   const amt = withAmt ? `<span class="a">${d>0?"+":d<0?"−":""}${won(Math.abs(d))}</span>` : "";
   let tag;
   if (!cur && !prev) tag = `<span class="dl flat">−</span>`;
@@ -721,14 +676,15 @@ function renderTrend(){
   $("trLegend").innerHTML = both
     ? `<span><i style="background:var(--income)"></i>수입</span><span><i style="background:var(--saving)"></i>적금</span><span><i style="background:var(--expense)"></i>지출</span>`
     : `<span><i style="background:var(--expense)"></i>지출</span>`;
-  $("trNote").textContent = both
+  const anyData = keys => keys.some(k => { const x = totals(k); return x.inc || x.exp || x.sav; });
+  $("trNote").textContent = !anyData([0,1,2,3,4,5].map(k => addMonth(S.view, -k))) ? "최근 6개월 기록이 아직 없습니다. 기록을 시작하면 달마다 막대가 쌓입니다." : both
     ? "최근 6개월 · 막대 아래 숫자는 남은 잔액(수입 − 적금 − 지출) · 막대를 누르면 그 달로 이동"
     : "최근 6개월 · 막대 아래 숫자는 전월 대비 지출 증감 · 막대를 누르면 그 달로 이동";
   const L = 48, R = 6, T = 22, B = 46;
   const iw = W - L - R, ih = H - T - B;
   const keys = []; for (let k = 5; k >= 0; k--) keys.push(addMonth(S.view, -k));
   const data = keys.map(k => Object.assign({k}, totals(k)));
-  const max = niceMax(Math.max(1, ...data.map(d => both ? Math.max(d.inc, d.exp) : d.exp)));
+  const max = niceMax(Math.max(0, ...data.map(d => both ? Math.max(d.inc, d.exp) : d.exp)));
   const prevExp = totals(addMonth(keys[0], -1)).exp;
   const yv = v => T + ih - v / max * ih;
   const step = iw / keys.length;
@@ -788,8 +744,7 @@ function kpiVal(el, n, signed){
 function render(){
   const [y,m] = S.view.split("-").map(Number);
   $("monthLbl").textContent = `${y}년 ${m}월`;
-  $("sampleNote").hidden = !S.sample;
-  $("csvBtn").hidden = S.sample || !downloads;
+  $("csvBtn").hidden = !realCount() || !downloads;
   const D = monthData();
   const lastDay = new Date(y, m, 0).getDate();
   const t = today();
@@ -941,10 +896,10 @@ function renderTable(D){
     if (e.type === "in") fIn += e.amount; else if (e.type === "save") fSav += e.amount; else fOut += e.amount;
     const c = CAT_BY[e.cat] || {n:e.cat, c:"--muted"};
     const wd = WD[new Date(y, m-1, Number(e.date.slice(8))).getDay()];
-    const del = S.sample ? "" : (S.confirmId === e.id
+    const del = (S.confirmId === e.id
       ? `<button type="button" class="del confirm" data-del="${esc(e.id)}">삭제</button>`
       : `<button type="button" class="del" data-ask="${esc(e.id)}" aria-label="삭제">×</button>`);
-    h += `<tr class="${S.sample?"sample":""}${e.id===S.flashId?" flash":""}">
+    h += `<tr class="${e.id===S.flashId?"flash":""}">
       <td class="dt">${e.date.slice(5).replace("-",".")}<small>${wd}</small></td>
       <td><span class="tag"><i style="background:var(${c.c})"></i>${esc(c.n)}</span></td>
       <td class="memo">${esc(e.memo || "")}</td>
@@ -1002,7 +957,7 @@ render();
 initStore();
 (async () => {
   try { downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch(e){ downloads = null; }
-  $("csvBtn").hidden = S.sample || !downloads;
+  $("csvBtn").hidden = !realCount() || !downloads;
 })();
 })();
 </script>
