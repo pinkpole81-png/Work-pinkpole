@@ -67,6 +67,10 @@ https://claude.ai/code/artifact/f370a6d6-30cf-42d0-9964-b50458ad0869
   날짜는 스타일을 해석하지 않고 엑셀 일련번호 그대로 두어 `ymd()` 가 변환한다
   (styles.xml 파싱을 피하려는 의도적 선택).
   `DecompressionStream` 이 없는 구형 브라우저는 붙여넣기로 안내한다
+- `whyNotXlsx()` — 파일 앞 8바이트로 원인을 구분한다. 업무망에서는 **문서보안(DRM)**
+  때문에 업로드가 실패하는 경우가 흔하므로 그냥 '엑셀이 아닙니다' 로 끝내지 말 것.
+  `PK\x03\x04`=정상 / `D0CF11E0…`=구형 .xls 또는 DRM / 그 외=DRM 암호화 추정.
+  오류 문구에 HTML 을 쓰므로 표시는 `innerHTML` 로 한다
 - `upPick()` — 시트 이름에 기대지 않고 `ROSTER_SPEC`/`LIST_SPEC` 머리글이
   맞는 시트를 골라낸다
 - `parseRoster()` / `parseList()` — **행 배열**을 받는다(파일·붙여넣기 공통 경로).

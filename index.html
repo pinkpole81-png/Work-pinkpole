@@ -2663,13 +2663,32 @@ async function inflateRaw(bytes){
   return new Uint8Array(ab);
 }
 
+/* .xlsx 는 ZIP 이라 'PK' 로 시작한다.
+   업무망에서는 문서보안(DRM)이 걸려 내용이 암호화된 파일이 올라오는 경우가 많아,
+   앞부분을 보고 원인을 구분해서 알려준다. */
+function whyNotXlsx(u8){
+  const h=[].slice.call(u8.subarray(0,8))
+    .map(b=>('0'+b.toString(16)).slice(-2)).join('');
+  if(h.indexOf('504b0304')===0) return null;                 /* 정상 ZIP */
+  if(h.indexOf('d0cf11e0a1b11ae1')===0)
+    return '이 파일은 <b>엑셀 97-2003 형식(.xls)</b> 이거나 <b>문서보안(DRM)이 걸린 파일</b>입니다. '
+         + '엑셀에서 열어 [다른 이름으로 저장] → <b>Excel 통합 문서(*.xlsx)</b> 로 저장한 뒤 올려주세요. '
+         + 'DRM 이 걸려 있다면 보안 해제(복호화) 후 저장해야 합니다.';
+  return '엑셀 파일로 읽히지 않습니다. <b>문서보안(DRM)이 적용된 파일</b>일 가능성이 큽니다. '
+       + '보안 해제 후 다시 올리시거나, 아래 <b>‘직접 붙여넣기’</b> 를 이용해 주세요. '
+       + `<span class="mute">(파일 앞부분: ${h})</span>`;
+}
+
 async function unzip(buf){
   const dv=new DataView(buf), u8=new Uint8Array(buf);
+  const why=whyNotXlsx(u8);
+  if(why) throw new Error(why);
   let eo=-1;
   for(let i=u8.length-22; i>=0 && i>=u8.length-65557; i--){
     if(dv.getUint32(i,true)===0x06054b50){ eo=i; break; }
   }
-  if(eo<0) throw new Error('엑셀 파일이 아닌 것 같습니다 (.xlsx 파일을 선택해 주세요).');
+  if(eo<0) throw new Error('엑셀 파일이 손상됐거나 <b>문서보안(DRM)</b>으로 내용이 잠겨 있습니다. '
+    + '보안 해제 후 다시 올려주세요.');
   const cnt=dv.getUint16(eo+10,true);
   let off=dv.getUint32(eo+16,true);
   const entries={};
@@ -2922,7 +2941,7 @@ async function upPick(input){
     upRun();
   }catch(err){
     info.className='up-file-info bad';
-    info.textContent=String((err&&err.message)||err);
+    info.innerHTML=String((err&&err.message)||err);
     $('#upResult').innerHTML='';
   }
 }
@@ -2944,7 +2963,7 @@ async function upPickAward(input){
     upRun();
   }catch(err){
     info.className='up-file-info bad';
-    info.textContent=String((err&&err.message)||err);
+    info.innerHTML=String((err&&err.message)||err);
   }
 }
 
@@ -3190,7 +3209,10 @@ function viewUpdate(){
       필요한 시트·열을 찾으므로 열 순서가 달라도 괜찮습니다.
       <b>주차별 실적은 동의 리스트에서 자동 계산</b>되므로 따로 입력하지 않습니다.
       <b>시상 엑셀만</b> 올려서 시상 화면만 갱신할 수도 있습니다.
-      인터넷 연결은 필요 없습니다.</div></div>
+      인터넷 연결은 필요 없습니다.<br>
+      <b>파일이 안 읽히면</b> 문서보안(DRM)이 걸린 경우가 많습니다.
+      엑셀에서 열어 <b>[다른 이름으로 저장] → Excel 통합 문서(*.xlsx)</b> 로
+      저장한 뒤 올리시거나, 아래 <b>‘직접 붙여넣기’</b> 를 쓰시면 됩니다.</div></div>
 
     <div class="card card-pad">
       <div class="up-step"><span class="up-no">1</span>
