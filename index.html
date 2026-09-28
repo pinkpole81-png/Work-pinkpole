@@ -1708,6 +1708,8 @@ let sampleOn = !!DATA.sampleMode;
 const SEP  = () => sampleOn ? DATA.sampleSep : DATA.sep;
 /* 자율참여(목표 없음 · 인센티브 적용) 시작 월. 규칙이 바뀌지 않는 한 고정값 */
 const AUTO0 = 9;
+/* 기능 버전 — 갱신 화면에 표시한다. 예전 파일을 쓰고 있는지 바로 구분하기 위함 */
+const BUILD = '2026-09-28';
 const DONE  = () => (DATA.autoDone||[]);
 /* 화면 문구는 모두 데이터의 월을 따라간다 — 10월, 11월도 그대로 동작한다 */
 const MN    = m => m + '월';
@@ -2705,6 +2707,7 @@ async function unzip(buf){
     off+=46+nlen+elen+clen;
   }
   return {
+    count: Object.keys(entries).length,
     has: n=>!!entries[n],
     names: ()=>Object.keys(entries),
     text: async n=>{
@@ -2763,8 +2766,13 @@ function sheetToRows(xml, shared){
 
 async function readXlsx(file){
   const zip=await unzip(await file.arrayBuffer());
-  if(!zip.has('xl/workbook.xml'))
-    throw new Error('엑셀 파일 구조를 찾지 못했습니다. .xls 라면 .xlsx 로 저장한 뒤 올려주세요.');
+  if(!zip.has('xl/workbook.xml')){
+    const names=zip.names();
+    throw new Error('압축은 열렸지만 <b>엑셀 내부 구조를 찾지 못했습니다</b>'
+      + ` (내부 파일 ${zip.count}개). 엑셀에서 [다른 이름으로 저장] → `
+      + '<b>Excel 통합 문서(*.xlsx)</b> 로 저장한 뒤 올려주세요.'
+      + (names.length ? `<br><span class="mute">내부: ${esc(names.slice(0,4).join(', '))}</span>` : ''));
+  }
 
   /* 공유 문자열 테이블 */
   const shared=[];
@@ -2941,7 +2949,9 @@ async function upPick(input){
     upRun();
   }catch(err){
     info.className='up-file-info bad';
-    info.innerHTML=String((err&&err.message)||err);
+    info.innerHTML=String((err&&err.message)||err)
+      + `<br><span class="mute">파일: ${esc(file.name)} · ${Math.round(file.size/1024)}KB`
+      + ` · 기능 버전 ${BUILD}</span>`;
     $('#upResult').innerHTML='';
   }
 }
@@ -2963,7 +2973,9 @@ async function upPickAward(input){
     upRun();
   }catch(err){
     info.className='up-file-info bad';
-    info.innerHTML=String((err&&err.message)||err);
+    info.innerHTML=String((err&&err.message)||err)
+      + `<br><span class="mute">파일: ${esc(file.name)} · ${Math.round(file.size/1024)}KB`
+      + ` · 기능 버전 ${BUILD}</span>`;
   }
 }
 
@@ -3200,7 +3212,7 @@ function viewUpdate(){
   return `
   <div class="sec">
     <div class="sec-hd"><h2>주차 데이터 갱신</h2>
-      <span class="desc">주간 실적 엑셀 파일 올리기 · 인터넷 연결 불필요</span>
+      <span class="desc">주간 실적 엑셀 파일 올리기 · 인터넷 연결 불필요 · 기능 버전 ${BUILD}</span>
       <span class="right"><button class="tab" style="padding:4px 12px;font-size:12.5px;
         border:1px solid var(--line);border-radius:8px" onclick="go('main')">← 대시보드</button></span></div>
 
