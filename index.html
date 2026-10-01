@@ -209,6 +209,9 @@ tr.clickable:hover{background:var(--hw-wash)}
 .up-fold{margin-top:16px;border-top:1px solid var(--line-2);padding-top:12px}
 .up-fold summary{cursor:pointer;font-size:12.5px;color:var(--slate);font-weight:700}
 .up-fold summary:hover{color:var(--hw-deep)}
+.up-done{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;
+  padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.up-done input{width:16px;height:16px;accent-color:var(--hw);cursor:pointer}
 .up-opt{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:6px;
   background:var(--ground);border:1px solid var(--line-2);font-size:11px;
   font-weight:700;color:var(--slate)}
@@ -1825,6 +1828,25 @@ const AWN   = () => MN(AWM()) + ' 시상';
 /* 완료된 월(엑셀 원본 1~8월) 중 마지막 — 시도·동의율 기준 표기에 쓴다 */
 const MSPAN = () => '1~' + MN(M[M.length-1].m);
 const findAuto = m => DONE().filter(x=>x.m===Number(m))[0] || null;
+
+/* 주차 기간('9/01~9/04')에서 영업일(월~금) 수를 센다.
+   기간 자체가 이미 휴일을 뺀 구간이므로 주말만 제외하면 된다.
+   엑셀에 영업일이 따로 오면 weeks 항목의 wd 값이 우선한다. */
+function bizDays(range, year){
+  const m = String(range||'').match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*[~\-–]\s*(\d{1,2})\s*\/\s*(\d{1,2})/);
+  if(!m) return 0;
+  const Y = Number(year) || Number(String(DATA.meta.baseDate||'').slice(0,4)) || new Date().getFullYear();
+  const a = new Date(Y, Number(m[1])-1, Number(m[2]));
+  const b = new Date(Y, Number(m[3])-1, Number(m[4]));
+  if(isNaN(a.getTime()) || isNaN(b.getTime()) || b<a) return 0;
+  let n=0;
+  for(let d=new Date(a); d<=b; d.setDate(d.getDate()+1)){
+    const w=d.getDay();
+    if(w!==0 && w!==6) n++;
+  }
+  return n;
+}
+const wdOf = (w, y) => (w && w.wd!=null) ? w.wd : bizDays(w&&w.range, y);
 /* 현재 자율참여 월에 실제 실적이 들어왔는지.
    시상 탭과 같은 규칙으로, 엑셀이 반영되기 전에는 그 달 탭을 띄우지 않는다. */
 const sepHas = () => {
@@ -2151,10 +2173,14 @@ function viewMain(){
           : '<div class="emptybox">주간 데이터가 없습니다.</div>'}
       </div>
       <div class="card"><div class="tbl-scroll">
-        <table><thead><tr><th class="l">주차</th><th class="l">기간</th><th>동의건수</th></tr></thead><tbody>
+        <table><thead><tr><th class="l">주차</th><th class="l">기간</th><th>영업일</th>
+          <th>동의건수</th></tr></thead><tbody>
         ${S.weeks.map(w=>`<tr><td class="l"><b>${esc(w.label)}</b></td><td class="l mute">${esc(w.range||'')}</td>
+          <td class="mute">${wdOf(w)?nf(wdOf(w))+'일':'-'}</td>
           <td class="agr">${nf(w.agr||0)}</td></tr>`).join('')}
-        </tbody><tfoot><tr><td class="l">누계</td><td></td><td class="agr">${nf(wAgr)}</td></tr></tfoot></table>
+        </tbody><tfoot><tr><td class="l">누계</td><td></td>
+          <td>${nf(S.weeks.reduce((a,w)=>a+wdOf(w),0))}일</td>
+          <td class="agr">${nf(wAgr)}</td></tr></tfoot></table>
       </div></div>
     </div>
   </div>
@@ -2293,12 +2319,14 @@ function viewSepMonth(src){
   <div class="sec">
     <div class="sec-hd"><h2>주차별 실적</h2><span class="desc">기준일 ${esc(S.baseDate||BASE())}</span></div>
     <div class="card"><div class="tbl-scroll">
-      <table><thead><tr><th class="l">주차</th><th class="l">기간</th>
+      <table><thead><tr><th class="l">주차</th><th class="l">기간</th><th>영업일</th>
         <th>동의건수</th></tr></thead><tbody>
       ${S.weeks.map(w=>`<tr><td class="l"><b>${esc(w.label)}</b></td>
         <td class="l mute">${esc(w.range||'')}</td>
+        <td class="mute">${wdOf(w)?nf(wdOf(w))+'일':'-'}</td>
         <td class="agr">${nf(w.agr||0)}</td></tr>`).join('')}
       </tbody><tfoot><tr><td class="l">누계</td><td></td>
+        <td>${nf(S.weeks.reduce((a,w)=>a+wdOf(w),0))}일</td>
         <td class="agr">${nf(wAgr)}</td></tr></tfoot></table>
     </div></div>
   </div>
@@ -2700,9 +2728,9 @@ function exportSheets(){
   const wAgr=S.weeks.reduce((a,w)=>a+(w.agr||0),0);
   months.push([MN(m) + (SEP().done ? '' : ' (집계중)'), '', wAgr, '']);
 
-  const weeks=[['주차','기간','동의건수']];
-  S.weeks.forEach(w=>weeks.push([w.label, w.range||'', w.agr||0]));
-  weeks.push(['누계','', wAgr]);
+  const weeks=[['주차','기간','영업일','동의건수']];
+  S.weeks.forEach(w=>weeks.push([w.label, w.range||'', wdOf(w)||'', w.agr||0]));
+  weeks.push(['누계','', S.weeks.reduce((a,w)=>a+wdOf(w),0), wAgr]);
 
   const ros=[['센터','팀','사번','상담사명','참여여부','동의건수','구간','인센티브(원)']];
   S.roster.slice().sort((a,b)=>b.agr-a.agr).forEach(r=>ros.push([
@@ -3094,13 +3122,13 @@ function upRun(){
   try{
     const rRows = UP.rows.roster || tsvRows(($('#upRoster')||{}).value||'');
     const lRows = UP.rows.list   || tsvRows(($('#upList')||{}).value||'');
-    const aRows = UP.rows.award;
+    const aRows = UP.rows.award || tsvRows(($('#upAwardPaste')||{}).value||'');
     const hasWeek = rRows.length && lRows.length;
-    if(!hasWeek && !aRows)
+    if(!hasWeek && !(aRows && aRows.length))
       throw new Error('주간 실적 엑셀 또는 시상 엑셀을 올려주세요.');
 
     /* 시상 자료만 갱신할 수도 있다 */
-    UP.award = aRows ? parseAward(aRows) : null;
+    UP.award = (aRows && aRows.length) ? parseAward(aRows) : null;
     if(UP.award){
       const t=(i)=>UP.award.reduce((a,r)=>a+(r[i]||0),0);
       add(true, `시상 자료 ${nf(UP.award.length)}명 · 동의누적 ${nf(t(4))}건`
@@ -3150,6 +3178,11 @@ function upRun(){
       else
         add(true, '시상 명단 사번이 모두 참여자 명단에 있음');
     }
+
+    /* 다른 달 자료면 '마감' 체크를 풀어 둔다 (새 달은 보통 집계 중) */
+    const nm0 = monthOf(UP.list);
+    const dn0 = $('#upDone');
+    if(dn0 && nm0 && nm0 !== DATA.sep.m) dn0.checked = false;
 
     const ds=UP.list.map(r=>r[1]).filter(Boolean).sort();
     if(ds.length && !$('#upBase').value) $('#upBase').value = ds[ds.length-1];
@@ -3231,7 +3264,9 @@ function upStage(){
       if(!UP.award && DATA.award) DATA.award.rows = [];
     }
     DATA.sep.m      = nm;
-    if(nm !== DATA.sep.m0) DATA.sep.done = false;   /* 새로 올라온 달은 집계 중 */
+    /* 마감 여부는 체크박스를 따른다. 새 달이면 기본은 집계 중 */
+    const dn = $('#upDone');
+    DATA.sep.done = (nm !== DATA.sep.m0) ? !!(dn && dn.checked) : !!(dn ? dn.checked : DATA.sep.done);
     DATA.sep.weeks  = UP.weeks.map(w=>({label:w.label, range:w.range, agr:w.agr}));
     DATA.sep.roster = UP.roster;
     DATA.sep.list   = UP.list;
@@ -3352,6 +3387,9 @@ function viewUpdate(){
         <textarea class="up-ta" id="upRoster" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
         <div class="up-step" style="margin-top:14px"><span class="up-no">B</span><div><b>‘동의List’ 시트</b></div></div>
         <textarea class="up-ta" id="upList" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
+        <div class="up-step" style="margin-top:14px"><span class="up-no">C</span>
+          <div><b>‘시상’ 시트</b> <span class="up-opt">선택</span></div></div>
+        <textarea class="up-ta" id="upAwardPaste" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
       </details>
 
       <div class="up-step" style="margin-top:22px"><span class="up-no">2</span>
@@ -3367,6 +3405,13 @@ function viewUpdate(){
           <div class="hint" style="margin:2px 0 0">비워두면 리스트의 마지막 날짜로 채웁니다</div></div></div>
       <input class="inp" id="upBase" type="date" style="max-width:200px"
         value="${esc(DATA.meta.baseDate||'')}">
+
+      <div class="up-step" style="margin-top:22px"><span class="up-no">4</span>
+        <div><b>집계 마감 여부</b>
+          <div class="hint" style="margin:2px 0 0">월이 끝나 최종 집계라면 체크하세요.
+            체크하면 차트의 ‘집계중’ 표시가 사라집니다.</div></div></div>
+      <label class="up-done"><input type="checkbox" id="upDone"${SEP().done?' checked':''}>
+        <span>이 달 집계를 마감했습니다</span></label>
 
       <div class="up-act" style="margin-top:18px">
         <button class="tab up-btn primary" onclick="upRun()">확인하기</button>
